@@ -233,19 +233,23 @@ ipcMain.handle('export-video', async (event, config) => {
     // Memory pipe: spawn FFmpeg immediately, pipe frames to stdin
     const args = _buildFFmpegArgs(config, 'pipe', null)
     const proc = spawn(ffmpegBin, args)
-    proc.stderr.on('data', d => { _session.ffmpegLog += d.toString() })
+    // Capture a stable reference — _session can be reset to null by export-cancel
+    // or a superseding export-video call while this process is still winding down.
+    const session = _session
+    proc.stderr.on('data', d => { session.ffmpegLog += d.toString() })
     proc.on('close', code => {
-      if (!_session) return
+      if (_session !== session) return
       if (code === 0) {
         event.sender.send('export-complete', { outputPath: config.outputPath })
       } else {
-        const excerpt = _session.ffmpegLog.slice(-800)
+        const excerpt = session.ffmpegLog.slice(-800)
         event.sender.send('export-error', { error: `FFmpeg exited with code ${code}`, log: excerpt })
       }
-      _session.frameWriter?.cleanup()
+      session.frameWriter?.cleanup()
       _session = null
     })
     proc.on('error', err => {
+      if (_session !== session) return
       event.sender.send('export-error', { error: err.message, log: '' })
       _session = null
     })
@@ -301,16 +305,18 @@ ipcMain.handle('export-done', async (event) => {
     const args = _buildFFmpegArgs(config, 'disk', frameWriter.directory)
 
     return new Promise(resolve => {
-      const proc = spawn(ffmpegBin, args)
-      proc.stderr.on('data', d => { _session.ffmpegLog += d.toString() })
+      const proc    = spawn(ffmpegBin, args)
+      const session = _session
+      proc.stderr.on('data', d => { session.ffmpegLog += d.toString() })
 
       proc.on('close', code => {
         frameWriter.cleanup()
+        if (_session !== session) { resolve({ ok: false }); return }
         if (code === 0) {
           event.sender.send('export-complete', { outputPath: config.outputPath })
           resolve({ ok: true })
         } else {
-          const excerpt = (_session.ffmpegLog || '').slice(-800)
+          const excerpt = (session.ffmpegLog || '').slice(-800)
           event.sender.send('export-error', { error: `FFmpeg exited with code ${code}`, log: excerpt })
           resolve({ ok: false })
         }
@@ -319,6 +325,7 @@ ipcMain.handle('export-done', async (event) => {
 
       proc.on('error', err => {
         frameWriter.cleanup()
+        if (_session !== session) { resolve({ ok: false }); return }
         event.sender.send('export-error', { error: err.message, log: '' })
         resolve({ ok: false })
         _session = null
