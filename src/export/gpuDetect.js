@@ -1,7 +1,7 @@
 // Main-process GPU encoder detection (CommonJS — required by main.js).
 // Runs `ffmpeg -encoders` once and caches the result for the app lifetime.
 const { spawnSync } = require('child_process')
-const ffmpegBin     = require('ffmpeg-static')
+const ffmpegBin     = require('./ffmpegPath')
 
 const _PRIORITY = [
   { label: 'NVENC', h264: 'h264_nvenc', h265: 'hevc_nvenc' },

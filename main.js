@@ -2,7 +2,7 @@ const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron')
 const path        = require('path')
 const fs          = require('fs')
 const { spawn }   = require('child_process')
-const ffmpegBin   = require('ffmpeg-static')
+const ffmpegBin   = require('./src/export/ffmpegPath')
 const { FrameWriter }       = require('./src/export/frameWriter')
 const { detectGpuEncoders } = require('./src/export/gpuDetect')
 
