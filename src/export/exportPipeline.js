@@ -55,13 +55,23 @@ function readExportSettings() {
 }
 
 // ─── Export state ─────────────────────────────────────────────────────────────
-let _cancelled = false
+let _cancelled  = false
+let _exporting  = false
+
+export function isExporting() {
+  return _exporting
+}
 
 export async function startExport() {
   const appState = window.appState
   if (!appState?.loaded) return
-
-  _cancelled = false
+  // Guard against re-entrant calls (double-click, Ctrl+E while exporting) —
+  // a second export-video call would kill the in-flight FFmpeg process mid-stream.
+  if (_exporting) return
+  _exporting  = true
+  _cancelled  = false
+  const btnExport = document.getElementById('btn-export')
+  if (btnExport) btnExport.disabled = true
   const { w, h, fps, codec, encoder, audioMode, bitrate, outFilename, outputPath: pickedPath } = readExportSettings()
   const { audioLoader, filePath } = appState
   const duration    = audioLoader.duration
@@ -132,5 +142,7 @@ export async function startExport() {
   } finally {
     canvasEngine.clearExportData()
     canvasEngine.restorePreviewResolution()
+    _exporting = false
+    if (btnExport) btnExport.disabled = false
   }
 }
