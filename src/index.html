@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: file:; media-src 'self' blob: file:">
+  <title>WaveExport</title>
+  <link rel="stylesheet" href="styles/main.css">
+  <link rel="stylesheet" href="styles/controls.css">
+</head>
+<body>
+  <div class="app-layout">
+
+    <!-- ═══════════════════════════════════════
+         LEFT PANEL — Visualization Controls
+         ═══════════════════════════════════════ -->
+    <aside class="panel left-panel" id="left-panel">
+      <div class="panel-header">
+        <svg class="app-icon" viewBox="0 0 20 20" fill="none">
+          <rect x="1" y="12" width="2" height="6" rx="1" fill="#00D4FF"/>
+          <rect x="4" y="8"  width="2" height="10" rx="1" fill="#00D4FF"/>
+          <rect x="7" y="5"  width="2" height="13" rx="1" fill="#00D4FF"/>
+          <rect x="10" y="9" width="2" height="9"  rx="1" fill="#00D4FF"/>
+          <rect x="13" y="6" width="2" height="12" rx="1" fill="#00D4FF"/>
+          <rect x="16" y="10" width="2" height="8" rx="1" fill="#00D4FF"/>
+        </svg>
+        <span class="app-name">WaveExport</span>
+      </div>
+
+      <div class="panel-body">
+
+        <!-- Visualizer Style Picker -->
+        <section class="panel-section">
+          <h3 class="section-label">Visualizer Style</h3>
+          <div id="style-picker" class="style-picker-grid">
+            <button class="style-btn active" data-mode="bar_classic" title="Classic Bar">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <rect x="2"  y="8"  width="3" height="14" rx="1"/>
+                <rect x="7"  y="4"  width="3" height="18" rx="1"/>
+                <rect x="12" y="10" width="3" height="12" rx="1"/>
+                <rect x="17" y="6"  width="3" height="16" rx="1"/>
+              </svg>
+              <span>Classic</span>
+            </button>
+            <button class="style-btn" data-mode="bar_mirror" title="Mirror Bar">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <rect x="2"  y="10" width="3" height="4" rx="1"/>
+                <rect x="7"  y="7"  width="3" height="10" rx="1"/>
+                <rect x="12" y="9"  width="3" height="6" rx="1"/>
+                <rect x="17" y="8"  width="3" height="8" rx="1"/>
+              </svg>
+              <span>Mirror</span>
+            </button>
+            <button class="style-btn" data-mode="line_smooth" title="Smooth Line">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <path d="M2 12 C5 6, 7 6, 9 12 C11 18, 13 18, 15 12 C17 6, 19 6, 22 12"/>
+              </svg>
+              <span>Line</span>
+            </button>
+            <button class="style-btn" data-mode="line_fill" title="Filled Wave">
+              <svg viewBox="0 0 24 24">
+                <path d="M2 16 C5 10,7 10,9 14 C11 18,13 18,15 14 C17 10,19 10,22 14 L22 20 L2 20Z" fill="currentColor" opacity="0.8"/>
+              </svg>
+              <span>Fill</span>
+            </button>
+            <button class="style-btn" data-mode="radial_pulse" title="Radial Pulse">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <circle cx="12" cy="12" r="3"/>
+                <circle cx="12" cy="12" r="6"/>
+                <circle cx="12" cy="12" r="9"/>
+              </svg>
+              <span>Radial</span>
+            </button>
+            <button class="style-btn" data-mode="spectrum_glow" title="Spectrum Glow">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <rect x="2"  y="14" width="2" height="8" rx="1" fill="#ff6b6b"/>
+                <rect x="5"  y="10" width="2" height="12" rx="1" fill="#ffa94d"/>
+                <rect x="8"  y="6"  width="2" height="16" rx="1" fill="#69db7c"/>
+                <rect x="11" y="9"  width="2" height="13" rx="1" fill="#4dabf7"/>
+                <rect x="14" y="12" width="2" height="10" rx="1" fill="#9775fa"/>
+                <rect x="17" y="8"  width="2" height="14" rx="1" fill="#f783ac"/>
+              </svg>
+              <span>Glow</span>
+            </button>
+          </div>
+        </section>
+
+        <!-- Background -->
+        <section class="panel-section">
+          <h3 class="section-label">Background</h3>
+          <div class="radio-row" id="bg-type-selector">
+            <label class="radio-label"><input type="radio" name="bg-type" value="solid" checked> Solid</label>
+            <label class="radio-label"><input type="radio" name="bg-type" value="gradient"> Grad</label>
+            <label class="radio-label"><input type="radio" name="bg-type" value="image"> Image</label>
+            <label class="radio-label"><input type="radio" name="bg-type" value="video"> Video</label>
+          </div>
+
+          <div id="bg-solid-controls">
+            <div class="control-group">
+              <label class="control-label">Color</label>
+              <input type="color" id="bg-color" class="color-swatch" value="#0D1117">
+            </div>
+          </div>
+
+          <div id="bg-gradient-controls" class="hidden">
+            <div class="control-group">
+              <label class="control-label">Color A</label>
+              <input type="color" id="bg-gradient-a" class="color-swatch" value="#0D1117">
+            </div>
+            <div class="control-group">
+              <label class="control-label">Color B</label>
+              <input type="color" id="bg-gradient-b" class="color-swatch" value="#1a2040">
+            </div>
+            <div class="control-group">
+              <label class="control-label">Angle <span class="value-display" id="bg-angle-val">135°</span></label>
+              <input type="range" id="bg-gradient-angle" class="range-input" min="0" max="360" value="135">
+            </div>
+          </div>
+
+          <div id="bg-image-controls" class="hidden">
+            <div class="control-group">
+              <button class="btn btn-secondary btn-sm w-full" id="btn-pick-bg-image">Choose Image…</button>
+              <span class="file-label" id="bg-image-name">No file</span>
+            </div>
+            <div class="control-group">
+              <label class="control-label">Blur <span class="value-display" id="bg-blur-val">0px</span></label>
+              <input type="range" id="bg-image-blur" class="range-input" min="0" max="20" value="0">
+            </div>
+            <div class="control-group">
+              <label class="control-label">Darken <span class="value-display" id="bg-darken-val">0%</span></label>
+              <input type="range" id="bg-image-darken" class="range-input" min="0" max="80" value="0">
+            </div>
+          </div>
+
+          <div id="bg-video-controls" class="hidden">
+            <div class="control-group">
+              <button class="btn btn-secondary btn-sm w-full" id="btn-pick-bg-video">Choose Video…</button>
+              <span class="file-label" id="bg-video-name">No file</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Color Controls -->
+        <section class="panel-section">
+          <h3 class="section-label">Waveform Color</h3>
+          <div class="control-group">
+            <label class="control-label">Color</label>
+            <div class="color-row">
+              <input type="color" id="waveform-color" class="color-swatch" value="#00D4FF">
+              <input type="text" id="waveform-color-hex" class="hex-input" value="#00D4FF" maxlength="7" spellcheck="false">
+            </div>
+          </div>
+          <div class="control-group">
+            <label class="control-label">Opacity <span class="value-display" id="waveform-opacity-val">100%</span></label>
+            <input type="range" id="waveform-opacity" class="range-input" min="0" max="100" value="100">
+          </div>
+          <div class="control-group">
+            <label class="control-label">Glow <span class="value-display" id="waveform-glow-val">0%</span></label>
+            <input type="range" id="waveform-glow" class="range-input" min="0" max="100" value="0">
+          </div>
+        </section>
+
+        <!-- Size Controls -->
+        <section class="panel-section">
+          <h3 class="section-label">Size & Shape</h3>
+          <div class="control-group">
+            <label class="control-label">Bar Width <span class="value-display" id="bar-width-val">4px</span></label>
+            <input type="range" id="bar-width" class="range-input" min="1" max="32" value="4">
+          </div>
+          <div class="control-group">
+            <label class="control-label">Bar Gap <span class="value-display" id="bar-gap-val">1px</span></label>
+            <input type="range" id="bar-gap" class="range-input" min="0" max="16" value="1">
+          </div>
+          <div class="control-group">
+            <label class="control-label">Line Width <span class="value-display" id="line-width-val">2px</span></label>
+            <input type="range" id="line-width" class="range-input" min="1" max="12" value="2">
+          </div>
+          <div class="control-group">
+            <label class="control-label">Padding <span class="value-display" id="canvas-padding-val">16px</span></label>
+            <input type="range" id="canvas-padding" class="range-input" min="0" max="120" value="16">
+          </div>
+        </section>
+
+        <!-- Smoothing -->
+        <section class="panel-section">
+          <h3 class="section-label">Smoothing</h3>
+          <div class="control-group">
+            <label class="control-label">Amount <span class="value-display" id="smoothing-val">80%</span></label>
+            <input type="range" id="smoothing" class="range-input" min="0" max="99" value="80">
+          </div>
+        </section>
+
+        <!-- Position -->
+        <section class="panel-section">
+          <h3 class="section-label">Position</h3>
+          <div class="control-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="waveform-center" checked>
+              Center vertically
+            </label>
+          </div>
+          <div class="control-group">
+            <label class="control-label">Y Offset <span class="value-display" id="y-offset-val">0px</span></label>
+            <input type="range" id="y-offset" class="range-input" min="-400" max="400" value="0">
+          </div>
+        </section>
+
+      </div>
+    </aside>
+
+    <!-- ═══════════════════════════════════════
+         CENTER PANEL — Canvas + Transport
+         ═══════════════════════════════════════ -->
+    <main class="center-panel" id="center-panel">
+      <div class="canvas-area" id="canvas-area">
+        <div class="canvas-drop-zone" id="canvas-drop-zone">
+          <div class="canvas-wrapper" id="canvas-wrapper">
+            <canvas id="waveform-canvas" width="1280" height="720"></canvas>
+            <div class="drop-overlay" id="drop-overlay">
+              <div class="drop-message">
+                <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M24 32V12"/>
+                  <path d="M14 22l10-10 10 10"/>
+                  <rect x="8" y="34" width="32" height="10" rx="3"/>
+                </svg>
+                <p class="drop-title">Drop audio here</p>
+                <p class="drop-sub">or press <kbd>Ctrl+O</kbd> to browse</p>
+                <p class="drop-formats">MP3 · WAV · FLAC · AAC · OGG · M4A</p>
+              </div>
+            </div>
+            <div class="fps-badge" id="fps-counter">-- fps</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="transport-bar" id="transport-bar">
+        <button class="btn btn-icon" id="btn-play-pause" title="Play / Pause (Space)" disabled>
+          <svg class="icon icon-play" viewBox="0 0 24 24" fill="currentColor"><polygon points="6,4 20,12 6,20"/></svg>
+          <svg class="icon icon-pause hidden" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="3" width="4" height="18" rx="1"/><rect x="15" y="3" width="4" height="18" rx="1"/></svg>
+        </button>
+        <span class="time-label" id="time-current">0:00</span>
+        <div class="scrubber-track" id="scrubber-track">
+          <div class="scrubber-fill"  id="scrubber-fill"></div>
+          <div class="scrubber-thumb" id="scrubber-thumb"></div>
+        </div>
+        <span class="time-label" id="time-total">0:00</span>
+      </div>
+    </main>
+
+    <!-- ═══════════════════════════════════════
+         RIGHT PANEL — Export & Metadata
+         ═══════════════════════════════════════ -->
+    <aside class="panel right-panel" id="right-panel">
+      <div class="panel-body">
+
+        <!-- Audio Info -->
+        <section class="panel-section">
+          <h3 class="section-label">Audio File</h3>
+          <div id="audio-info-empty" class="empty-state">No file loaded</div>
+          <div id="audio-meta" class="audio-meta hidden">
+            <div class="meta-row"><span class="meta-key">Title</span>    <span class="meta-val" id="meta-title">—</span></div>
+            <div class="meta-row"><span class="meta-key">Artist</span>   <span class="meta-val" id="meta-artist">—</span></div>
+            <div class="meta-row"><span class="meta-key">Duration</span> <span class="meta-val" id="meta-duration">—</span></div>
+            <div class="meta-row"><span class="meta-key">Format</span>   <span class="meta-val" id="meta-format">—</span></div>
+          </div>
+          <button class="btn btn-secondary btn-sm mt-6" id="btn-open-audio">Open Audio File…</button>
+        </section>
+
+        <!-- Text Overlay -->
+        <section class="panel-section">
+          <div class="section-label-row">
+            <h3 class="section-label">Text Overlay</h3>
+            <label class="toggle">
+              <input type="checkbox" id="overlay-enabled">
+              <span class="toggle-track"><span class="toggle-thumb"></span></span>
+            </label>
+          </div>
+          <div id="overlay-controls" class="overlay-controls" data-disabled="true">
+            <div class="control-group">
+              <label class="control-label">Title</label>
+              <input type="text" id="overlay-title" class="text-input" placeholder="Track title…" disabled>
+            </div>
+            <div class="control-group">
+              <label class="control-label">Artist</label>
+              <input type="text" id="overlay-artist" class="text-input" placeholder="Artist name…" disabled>
+            </div>
+            <div class="control-group">
+              <label class="control-label">Font</label>
+              <select id="overlay-font" class="select-input" disabled>
+                <option value="Inter, system-ui, sans-serif">Inter (bundled)</option>
+                <option value="'JetBrains Mono', monospace">JetBrains Mono (bundled)</option>
+                <option value="system-ui, -apple-system, sans-serif">System Default</option>
+                <option value="Arial, sans-serif">Arial</option>
+                <option value="Georgia, serif">Georgia</option>
+                <option value="'Courier New', monospace">Courier New</option>
+              </select>
+            </div>
+            <div class="control-group">
+              <label class="control-label">Position</label>
+              <select id="overlay-position" class="select-input" disabled>
+                <option value="bottom-left">Bottom Left</option>
+                <option value="bottom-center">Bottom Center</option>
+                <option value="top-left">Top Left</option>
+                <option value="top-center">Top Center</option>
+                <option value="custom">Custom XY</option>
+              </select>
+            </div>
+            <div class="control-group hidden" id="overlay-xy-group">
+              <label class="control-label">X</label>
+              <input type="number" id="overlay-x" class="number-input" value="40" min="0" disabled>
+              <label class="control-label ml-8">Y</label>
+              <input type="number" id="overlay-y" class="number-input" value="40" min="0" disabled>
+            </div>
+            <div class="control-group">
+              <label class="control-label">Color</label>
+              <input type="color" id="overlay-color" class="color-swatch" value="#E6EDF3" disabled>
+            </div>
+            <div class="control-group">
+              <label class="control-label">Size <span class="value-display" id="overlay-size-val">32px</span></label>
+              <input type="range" id="overlay-size" class="range-input" min="12" max="120" value="32" disabled>
+            </div>
+            <div class="control-group">
+              <label class="control-label">Opacity <span class="value-display" id="overlay-opacity-val">100%</span></label>
+              <input type="range" id="overlay-opacity" class="range-input" min="0" max="100" value="100" disabled>
+            </div>
+          </div>
+        </section>
+
+        <!-- Resolution -->
+        <section class="panel-section">
+          <h3 class="section-label">Resolution</h3>
+          <div class="control-group">
+            <select id="resolution-preset" class="select-input">
+              <option value="1920x1080" selected>Full HD — 1920×1080</option>
+              <option value="3840x2160">4K UHD — 3840×2160</option>
+              <option value="1080x1920">Shorts/Reels — 1080×1920</option>
+              <option value="1080x1080">Square — 1080×1080</option>
+              <option value="custom">Custom…</option>
+            </select>
+          </div>
+          <div class="control-group hidden" id="custom-res-group">
+            <label class="control-label">W</label>
+            <input type="number" id="custom-width"  class="number-input" value="1920" min="240">
+            <label class="control-label ml-8">H</label>
+            <input type="number" id="custom-height" class="number-input" value="1080" min="240">
+          </div>
+        </section>
+
+        <!-- Export Settings -->
+        <section class="panel-section">
+          <h3 class="section-label">Export Settings</h3>
+          <div class="control-group">
+            <label class="control-label">Frame Rate</label>
+            <select id="export-fps" class="select-input">
+              <option value="24">24 fps</option>
+              <option value="30" selected>30 fps</option>
+              <option value="60">60 fps</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <label class="control-label">Codec</label>
+            <select id="export-codec" class="select-input">
+              <option value="h264" selected>H.264 (compatible)</option>
+              <option value="h265">H.265 (smaller, slower)</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <label class="control-label">Bitrate</label>
+            <div class="radio-row">
+              <label class="radio-label"><input type="radio" name="bitrate-mode" value="auto" checked> Auto</label>
+              <label class="radio-label"><input type="radio" name="bitrate-mode" value="manual"> Manual</label>
+            </div>
+            <div class="bitrate-manual hidden" id="bitrate-manual-group">
+              <input type="number" id="manual-bitrate" class="number-input" value="8000" min="500" max="100000" step="500">
+              <span class="unit-label">kbps</span>
+            </div>
+          </div>
+          <div class="control-group">
+            <label class="control-label">Audio</label>
+            <select id="audio-mode" class="select-input">
+              <option value="passthrough" selected>Passthrough (recommended)</option>
+              <option value="aac320">Re-encode AAC 320kbps</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <label class="control-label">Output file</label>
+            <div class="output-row">
+              <input type="text" id="output-filename" class="text-input text-input-sm" placeholder="audio-waveexport.mp4">
+              <button class="btn btn-icon-sm" id="btn-pick-output" title="Choose output location">…</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Project Save / Load -->
+        <section class="panel-section">
+          <h3 class="section-label">Project</h3>
+          <div class="output-row">
+            <button class="btn btn-secondary btn-sm" id="btn-save-project" style="flex:1">Save…</button>
+            <button class="btn btn-secondary btn-sm" id="btn-load-project" style="flex:1">Load…</button>
+          </div>
+          <p class="export-hint mt-6" id="project-hint">Ctrl+S to save</p>
+        </section>
+
+        <!-- Export Action -->
+        <div class="export-action">
+          <button class="btn btn-export" id="btn-export" disabled>
+            <svg viewBox="0 0 20 20" fill="currentColor" class="icon-sm"><path d="M10 2v10M5 7l5 5 5-5M3 15h14v2H3z"/></svg>
+            Export MP4
+          </button>
+          <p class="export-hint" id="export-hint">Load an audio file to export</p>
+        </div>
+
+      </div>
+    </aside>
+
+  </div>
+
+  <!-- Export Progress Modal -->
+  <div id="export-modal" class="modal-overlay hidden" role="dialog" aria-modal="true">
+    <div class="modal">
+      <h2 class="modal-title">Exporting MP4…</h2>
+      <div class="progress-track">
+        <div class="progress-fill" id="export-progress-fill"></div>
+      </div>
+      <p class="progress-stats" id="export-progress-stats">Preparing…</p>
+      <p class="progress-eta"   id="export-progress-eta"></p>
+      <button class="btn btn-destructive" id="btn-export-cancel">Cancel Export</button>
+    </div>
+  </div>
+
+  <!-- Error Dialog -->
+  <div id="error-modal" class="modal-overlay hidden" role="alertdialog" aria-modal="true">
+    <div class="modal">
+      <h2 class="modal-title" id="error-modal-title">Export Error</h2>
+      <p class="progress-stats" id="error-modal-msg"></p>
+      <pre class="error-log hidden" id="error-modal-log"></pre>
+      <button class="btn btn-secondary" id="error-modal-close">Dismiss</button>
+    </div>
+  </div>
+
+  <!-- About Modal -->
+  <div id="about-modal" class="modal-overlay hidden" role="dialog" aria-modal="true">
+    <div class="modal about-modal">
+      <h2 class="modal-title">WaveExport</h2>
+      <p class="about-tagline">Version 1.0.0 — Audio waveform visualizer</p>
+      <p class="about-tagline">Export MP4 videos from any audio file. Fully offline.</p>
+      <div class="about-section">
+        <h3 class="section-label">Open Source Components</h3>
+        <p class="about-license">
+          <strong>FFmpeg</strong> — GNU Lesser General Public License v2.1+<br>
+          This app uses FFmpeg libraries. FFmpeg source code is available at
+          <span class="about-url">ffmpeg.org</span>. No FFmpeg source was modified.
+        </p>
+        <p class="about-license">
+          <strong>Inter</strong> — SIL Open Font License 1.1<br>
+          <strong>JetBrains Mono</strong> — Apache License 2.0
+        </p>
+        <p class="about-license">
+          <strong>ffmpeg-static</strong> — MIT &nbsp;·&nbsp;
+          <strong>fluent-ffmpeg</strong> — MIT &nbsp;·&nbsp;
+          <strong>Electron</strong> — MIT
+        </p>
+      </div>
+      <button class="btn btn-secondary" id="about-modal-close">Close</button>
+    </div>
+  </div>
+
+  <script type="module" src="renderer.js"></script>
+</body>
+</html>

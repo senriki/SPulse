@@ -1,0 +1,350 @@
+/* ─── Shared Control Components ──────────────────────────────────────────── */
+
+/* Control Group */
+.control-group {
+  margin-bottom: 8px;
+}
+
+.control-group:last-child { margin-bottom: 0; }
+
+.control-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  margin-bottom: 4px;
+}
+
+.value-display {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--color-text-muted);
+}
+
+/* ─── Range Slider ────────────────────────────────────────────────────────── */
+.range-input {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  background: var(--color-surface-active);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+  border: none;
+}
+
+.range-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 13px;
+  height: 13px;
+  background: var(--color-accent);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.range-input::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 0 3px var(--color-accent-dim);
+}
+
+.range-input::-moz-range-thumb {
+  width: 13px;
+  height: 13px;
+  background: var(--color-accent);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.range-input:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* ─── Color Swatch (native color input) ──────────────────────────────────── */
+.color-swatch {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 32px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--color-panel-border);
+  border-radius: var(--radius-sm);
+  background: none;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.color-swatch::-webkit-color-swatch-wrapper { padding: 0; }
+.color-swatch::-webkit-color-swatch { border: none; }
+
+.color-swatch:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* ─── Radio Buttons ───────────────────────────────────────────────────────── */
+.radio-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.radio-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.radio-label input[type="radio"] {
+  accent-color: var(--color-accent);
+  cursor: pointer;
+}
+
+/* ─── Checkbox ────────────────────────────────────────────────────────────── */
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+  accent-color: var(--color-accent);
+  cursor: pointer;
+  width: 13px;
+  height: 13px;
+}
+
+/* ─── Text Input ─────────────────────────────────────────────────────────── */
+.text-input {
+  width: 100%;
+  background: var(--color-app-bg);
+  border: 1px solid var(--color-panel-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-primary);
+  font-size: 12px;
+  font-family: var(--font-ui);
+  padding: 5px 8px;
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.text-input:focus {
+  border-color: var(--color-accent);
+}
+
+.text-input:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.text-input-sm { font-size: 11px; }
+
+.text-input[readonly] {
+  color: var(--color-text-secondary);
+  cursor: default;
+}
+
+/* ─── Number Input ───────────────────────────────────────────────────────── */
+.number-input {
+  background: var(--color-app-bg);
+  border: 1px solid var(--color-panel-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-primary);
+  font-size: 12px;
+  font-family: var(--font-mono);
+  padding: 4px 6px;
+  outline: none;
+  width: 72px;
+  transition: border-color var(--transition-fast);
+}
+
+.number-input:focus { border-color: var(--color-accent); }
+.number-input:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ─── Select ─────────────────────────────────────────────────────────────── */
+.select-input {
+  width: 100%;
+  background: var(--color-app-bg);
+  border: 1px solid var(--color-panel-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-primary);
+  font-size: 12px;
+  font-family: var(--font-ui);
+  padding: 5px 8px;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238B949E' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  padding-right: 26px;
+  transition: border-color var(--transition-fast);
+}
+
+.select-input:focus { border-color: var(--color-accent); }
+.select-input:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ─── Buttons ─────────────────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  font-size: 12px;
+  font-family: var(--font-ui);
+  font-weight: 500;
+  cursor: pointer;
+  padding: 6px 12px;
+  transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast), opacity var(--transition-fast);
+  white-space: nowrap;
+  outline: none;
+  user-select: none;
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Secondary button */
+.btn-secondary {
+  background: var(--color-surface-active);
+  border-color: var(--color-panel-border);
+  color: var(--color-text-secondary);
+}
+
+.btn-secondary:hover {
+  background: var(--color-surface-hover);
+  border-color: var(--color-text-muted);
+  color: var(--color-text-primary);
+}
+
+/* Small button */
+.btn-sm {
+  font-size: 11px;
+  padding: 4px 9px;
+}
+
+/* Icon button (play/pause) */
+.btn-icon {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: var(--color-surface-active);
+  border-color: var(--color-panel-border);
+  color: var(--color-text-primary);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.btn-icon:hover:not(:disabled) {
+  background: var(--color-accent-dim);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.btn-icon svg.icon {
+  width: 14px;
+  height: 14px;
+}
+
+/* Small icon button */
+.btn-icon-sm {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  flex-shrink: 0;
+  background: var(--color-surface-active);
+  border: 1px solid var(--color-panel-border);
+  color: var(--color-text-secondary);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.btn-icon-sm:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-text-primary);
+}
+
+/* Export button */
+.btn-export {
+  width: 100%;
+  padding: 10px 16px;
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #000;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  border-radius: var(--radius-md);
+  gap: 8px;
+}
+
+.btn-export:hover:not(:disabled) {
+  background: #1de0ff;
+  border-color: #1de0ff;
+  box-shadow: 0 0 12px var(--color-accent-glow);
+}
+
+.btn-export:disabled {
+  background: var(--color-surface-active);
+  border-color: var(--color-panel-border);
+  color: var(--color-text-muted);
+}
+
+.icon-sm { width: 16px; height: 16px; }
+
+/* ─── Color Row (swatch + hex text) ─────────────────────────────────────────── */
+.color-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hex-input {
+  flex: 1;
+  min-width: 0;
+  background: var(--color-app-bg);
+  border: 1px solid var(--color-panel-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-primary);
+  font-size: 11px;
+  font-family: var(--font-mono);
+  padding: 4px 6px;
+  outline: none;
+  text-transform: uppercase;
+  transition: border-color var(--transition-fast);
+}
+
+.hex-input:focus { border-color: var(--color-accent); }
+
+/* File label (shows selected file name) */
+.file-label {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

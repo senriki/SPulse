@@ -1,0 +1,85 @@
+// Text overlay singleton — drawn as the top-most layer each canvas frame.
+// Set as window.textOverlay so canvasEngine can call it without a circular import.
+
+const MARGIN = 40  // px from canvas edges
+
+export const textOverlay = {
+  draw(ctx, W, H, overlayState) {
+    const { title, artist, font, size, color, opacity, position, x, y } = overlayState
+    if (!title && !artist) return
+
+    const artistSize = Math.round(size * 0.62)
+    const lineGap    = Math.round(size * 0.2)
+
+    // Resolve anchor coordinates and text alignment from position setting
+    let tx, tyTitle, tyArtist, align
+
+    switch (position) {
+      case 'top-left':
+        tx       = MARGIN
+        tyTitle  = MARGIN + size
+        tyArtist = tyTitle + lineGap + artistSize
+        align    = 'left'
+        break
+
+      case 'top-center':
+        tx       = W / 2
+        tyTitle  = MARGIN + size
+        tyArtist = tyTitle + lineGap + artistSize
+        align    = 'center'
+        break
+
+      case 'bottom-center':
+        tx       = W / 2
+        tyArtist = H - MARGIN
+        tyTitle  = tyArtist - lineGap - artistSize
+        align    = 'center'
+        break
+
+      case 'custom':
+        tx       = x
+        tyTitle  = y
+        tyArtist = y + size + lineGap
+        align    = 'left'
+        break
+
+      default: // 'bottom-left'
+        tx       = MARGIN
+        tyArtist = H - MARGIN
+        tyTitle  = tyArtist - lineGap - artistSize
+        align    = 'left'
+    }
+
+    // When no artist, keep title at bottom edge
+    if (!artist && (position === 'bottom-left' || position === 'bottom-center')) {
+      tyTitle = H - MARGIN
+    }
+
+    ctx.save()
+    ctx.textBaseline  = 'alphabetic'
+    ctx.textAlign     = align
+    // Drop-shadow for legibility on any background
+    ctx.shadowColor   = 'rgba(0,0,0,0.8)'
+    ctx.shadowBlur    = 14
+    ctx.shadowOffsetX = 0
+    ctx.shadowOffsetY = 2
+
+    if (title) {
+      ctx.globalAlpha = opacity
+      ctx.fillStyle   = color
+      ctx.font        = `600 ${size}px ${font}`
+      ctx.fillText(title, tx, tyTitle)
+    }
+
+    if (artist) {
+      ctx.globalAlpha = opacity * 0.78
+      ctx.fillStyle   = color
+      ctx.font        = `400 ${artistSize}px ${font}`
+      ctx.fillText(artist, tx, tyArtist)
+    }
+
+    ctx.restore()
+  }
+}
+
+window.textOverlay = textOverlay

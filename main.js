@@ -1,0 +1,322 @@
+const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron')
+const path        = require('path')
+const fs          = require('fs')
+const { spawn }   = require('child_process')
+const ffmpegBin   = require('ffmpeg-static')
+const { FrameWriter } = require('./src/export/frameWriter')
+
+let _mainWin = null
+
+function createWindow() {
+  _mainWin = new BrowserWindow({
+    width: 1400,
+    height: 900,
+    minWidth: 1100,
+    minHeight: 700,
+    backgroundColor: '#0D1117',
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: false
+    }
+  })
+
+  _mainWin.loadFile('src/index.html')
+}
+
+function createMenu() {
+  const isMac = process.platform === 'darwin'
+  const template = [
+    ...(isMac ? [{ role: 'appMenu' }] : []),
+    {
+      label: 'File',
+      submenu: [
+        { label: 'Open Audio…', accelerator: 'CmdOrCtrl+O', click: () => _mainWin?.webContents.send('menu-open-audio') },
+        { label: 'Save Project', accelerator: 'CmdOrCtrl+S', click: () => _mainWin?.webContents.send('menu-save-project') },
+        { type: 'separator' },
+        isMac ? { role: 'close' } : { role: 'quit' }
+      ]
+    },
+    {
+      label: 'Edit',
+      submenu: [
+        { label: 'Undo', accelerator: 'CmdOrCtrl+Z', click: () => _mainWin?.webContents.send('menu-undo') },
+        { label: 'Redo', accelerator: 'CmdOrCtrl+Y', click: () => _mainWin?.webContents.send('menu-redo') },
+      ]
+    },
+    {
+      label: 'Help',
+      submenu: [
+        { label: 'About WaveExport', click: () => _mainWin?.webContents.send('show-about') }
+      ]
+    }
+  ]
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template))
+}
+
+app.whenReady().then(() => {
+  createWindow()
+  createMenu()
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+  })
+})
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') app.quit()
+})
+
+// ─── App control ─────────────────────────────────────────────────────────────
+ipcMain.handle('quit', () => app.quit())
+
+// ─── Audio file ───────────────────────────────────────────────────────────────
+ipcMain.handle('open-audio-file', async () => {
+  const { canceled, filePaths } = await dialog.showOpenDialog({
+    title: 'Open Audio File',
+    filters: [{ name: 'Audio', extensions: ['mp3', 'wav', 'flac', 'aac', 'ogg', 'm4a'] }],
+    properties: ['openFile']
+  })
+  if (canceled || filePaths.length === 0) return null
+  const filePath = filePaths[0]
+  const buffer = fs.readFileSync(filePath)
+  return { filePath, buffer }
+})
+
+// ─── Generic file dialog ──────────────────────────────────────────────────────
+ipcMain.handle('open-file-dialog', async (event, { title, extensions }) => {
+  const { canceled, filePaths } = await dialog.showOpenDialog({
+    title,
+    filters: [{ name: 'File', extensions }],
+    properties: ['openFile']
+  })
+  if (canceled || filePaths.length === 0) return null
+  return filePaths[0]
+})
+
+// ─── Project file ─────────────────────────────────────────────────────────────
+ipcMain.handle('save-project', async (event, { data, defaultPath }) => {
+  const { canceled, filePath } = await dialog.showSaveDialog({
+    title: 'Save Project',
+    defaultPath: defaultPath || 'project.wvx',
+    filters: [{ name: 'WaveExport Project', extensions: ['wvx'] }]
+  })
+  if (canceled || !filePath) return null
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8')
+  return filePath
+})
+
+ipcMain.handle('load-project', async () => {
+  const { canceled, filePaths } = await dialog.showOpenDialog({
+    title: 'Open Project',
+    filters: [{ name: 'WaveExport Project', extensions: ['wvx'] }],
+    properties: ['openFile']
+  })
+  if (canceled || filePaths.length === 0) return null
+  const filePath = filePaths[0]
+  const data = JSON.parse(fs.readFileSync(filePath, 'utf8'))
+  return { filePath, data }
+})
+
+// ─── Load audio by explicit path (used by project load — no dialog) ──────────
+ipcMain.handle('load-audio-path', async (event, filePath) => {
+  try {
+    const buffer = fs.readFileSync(filePath)
+    return { filePath, buffer }
+  } catch (err) {
+    return { error: err.message }
+  }
+})
+
+// ─── Output path save dialog ─────────────────────────────────────────────────
+ipcMain.handle('pick-output-path', async (event, { defaultPath }) => {
+  const { canceled, filePath } = await dialog.showSaveDialog({
+    title: 'Save MP4 Video',
+    defaultPath: defaultPath || 'waveexport.mp4',
+    filters: [{ name: 'MP4 Video', extensions: ['mp4'] }]
+  })
+  if (canceled || !filePath) return null
+  return filePath
+})
+
+// ─── Export pipeline ──────────────────────────────────────────────────────────
+// Active export session — shared between export-video / export-frame / export-done / export-cancel
+let _session = null
+
+function _buildFFmpegArgs(config, mode, frameDir) {
+  const { width, height, fps, codec, audioMode, bitrate, audioPath, outputPath } = config
+  const args = []
+
+  if (mode === 'pipe') {
+    // JPEG frames piped to stdin
+    args.push('-f', 'image2pipe', '-framerate', String(fps), '-vcodec', 'mjpeg', '-i', 'pipe:0')
+  } else {
+    // JPEG sequence written to disk
+    args.push('-framerate', String(fps), '-i', path.join(frameDir, 'frame%08d.jpg'))
+  }
+
+  // Audio input
+  args.push('-i', audioPath)
+
+  // Video codec + quality
+  const isH265 = codec === 'h265'
+  args.push('-c:v', isH265 ? 'libx265' : 'libx264')
+  if (isH265) args.push('-tag:v', 'hvc1')
+
+  if (bitrate) {
+    args.push('-b:v', `${bitrate}k`)
+  } else {
+    args.push('-crf', isH265 ? '28' : '23', '-preset', 'medium')
+  }
+
+  // Pixel format (yuv420p = universal compatibility)
+  args.push('-pix_fmt', 'yuv420p')
+
+  // Audio
+  if (audioMode === 'aac320') {
+    args.push('-c:a', 'aac', '-b:a', '320k')
+  } else {
+    args.push('-c:a', 'copy')
+  }
+
+  // Mux options
+  args.push('-shortest', '-movflags', '+faststart', '-y', outputPath)
+  return args
+}
+
+// export-video: validate config, spawn FFmpeg (pipe mode) or init disk writer
+ipcMain.handle('export-video', async (event, config) => {
+  // Clean up any previous session
+  if (_session) {
+    try { _session.proc?.kill('SIGKILL') } catch {}
+    _session.frameWriter?.cleanup()
+    _session = null
+  }
+
+  const { useDisk, totalFrames } = config
+
+  _session = {
+    config,
+    proc:        null,
+    frameWriter: null,
+    ffmpegLog:   '',
+    framesReceived: 0,
+    totalFrames,
+    webContents: event.sender,
+  }
+
+  if (useDisk) {
+    // Disk path: init frame writer now, FFmpeg spawned in export-done
+    const fw = new FrameWriter()
+    fw.init()
+    _session.frameWriter = fw
+  } else {
+    // Memory pipe: spawn FFmpeg immediately, pipe frames to stdin
+    const args = _buildFFmpegArgs(config, 'pipe', null)
+    const proc = spawn(ffmpegBin, args)
+    proc.stderr.on('data', d => { _session.ffmpegLog += d.toString() })
+    proc.on('close', code => {
+      if (!_session) return
+      if (code === 0) {
+        event.sender.send('export-complete', { outputPath: config.outputPath })
+      } else {
+        const excerpt = _session.ffmpegLog.slice(-800)
+        event.sender.send('export-error', { error: `FFmpeg exited with code ${code}`, log: excerpt })
+      }
+      _session.frameWriter?.cleanup()
+      _session = null
+    })
+    proc.on('error', err => {
+      event.sender.send('export-error', { error: err.message, log: '' })
+      _session = null
+    })
+    _session.proc = proc
+  }
+
+  return { ok: true, useDisk }
+})
+
+// export-frame: receive one rendered frame from renderer
+ipcMain.handle('export-frame', async (event, { frameData, frameIndex }) => {
+  if (!_session) return { ok: false }
+
+  _session.framesReceived++
+  const progress = _session.totalFrames > 0
+    ? Math.round((_session.framesReceived / _session.totalFrames) * 100)
+    : 0
+
+  if (_session.frameWriter) {
+    // Disk path: write to temp file
+    _session.frameWriter.writeFrame(frameData)
+  } else if (_session.proc) {
+    // Pipe path: write decoded JPEG buffer to FFmpeg stdin
+    const base64 = frameData.replace(/^data:image\/\w+;base64,/, '')
+    const buf    = Buffer.from(base64, 'base64')
+    const ok     = _session.proc.stdin.write(buf)
+    // Respect backpressure — wait for drain if buffer is full
+    if (!ok) await new Promise(res => _session.proc.stdin.once('drain', res))
+  }
+
+  event.sender.send('export-progress', {
+    percent:       progress,
+    framesWritten: _session.framesReceived,
+    totalFrames:   _session.totalFrames,
+  })
+
+  return { ok: true, progress }
+})
+
+// export-done: all frames sent — close stdin (pipe) or run FFmpeg (disk)
+ipcMain.handle('export-done', async (event) => {
+  if (!_session) return { ok: false }
+
+  if (_session.proc) {
+    // Pipe mode: close stdin, FFmpeg will finish encoding and fire 'close' event
+    _session.proc.stdin.end()
+    return { ok: true }
+  }
+
+  if (_session.frameWriter) {
+    // Disk mode: spawn FFmpeg on the collected frame sequence
+    const { config, frameWriter } = _session
+    const args = _buildFFmpegArgs(config, 'disk', frameWriter.directory)
+
+    return new Promise(resolve => {
+      const proc = spawn(ffmpegBin, args)
+      proc.stderr.on('data', d => { _session.ffmpegLog += d.toString() })
+
+      proc.on('close', code => {
+        frameWriter.cleanup()
+        if (code === 0) {
+          event.sender.send('export-complete', { outputPath: config.outputPath })
+          resolve({ ok: true })
+        } else {
+          const excerpt = (_session.ffmpegLog || '').slice(-800)
+          event.sender.send('export-error', { error: `FFmpeg exited with code ${code}`, log: excerpt })
+          resolve({ ok: false })
+        }
+        _session = null
+      })
+
+      proc.on('error', err => {
+        frameWriter.cleanup()
+        event.sender.send('export-error', { error: err.message, log: '' })
+        resolve({ ok: false })
+        _session = null
+      })
+
+      _session.proc = proc
+    })
+  }
+
+  return { ok: false }
+})
+
+// export-cancel: kill FFmpeg, clean up
+ipcMain.handle('export-cancel', async () => {
+  if (!_session) return { ok: true }
+  try { _session.proc?.kill('SIGKILL') } catch {}
+  _session.frameWriter?.cleanup()
+  _session = null
+  return { ok: true }
+})
