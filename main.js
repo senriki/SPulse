@@ -3,7 +3,8 @@ const path        = require('path')
 const fs          = require('fs')
 const { spawn }   = require('child_process')
 const ffmpegBin   = require('ffmpeg-static')
-const { FrameWriter } = require('./src/export/frameWriter')
+const { FrameWriter }       = require('./src/export/frameWriter')
+const { detectGpuEncoders } = require('./src/export/gpuDetect')
 
 let _mainWin = null
 
@@ -69,6 +70,9 @@ app.on('window-all-closed', () => {
 
 // ─── App control ─────────────────────────────────────────────────────────────
 ipcMain.handle('quit', () => app.quit())
+
+// ─── GPU encoder detection ────────────────────────────────────────────────────
+ipcMain.handle('detect-gpu-encoders', () => detectGpuEncoders())
 
 // ─── Audio file ───────────────────────────────────────────────────────────────
 ipcMain.handle('open-audio-file', async () => {
@@ -143,15 +147,34 @@ ipcMain.handle('pick-output-path', async (event, { defaultPath }) => {
 // Active export session — shared between export-video / export-frame / export-done / export-cancel
 let _session = null
 
+function _resolveEncoder(userPref, isH265) {
+  const gpu = detectGpuEncoders()
+  if (!userPref || userPref === 'auto') return isH265 ? gpu.h265 : gpu.h264
+  if (userPref === 'nvenc') return isH265 ? 'hevc_nvenc' : 'h264_nvenc'
+  if (userPref === 'amf')   return isH265 ? 'hevc_amf'   : 'h264_amf'
+  if (userPref === 'qsv')   return isH265 ? 'hevc_qsv'   : 'h264_qsv'
+  return isH265 ? 'libx265' : 'libx264'
+}
+
+function _encoderQualityArgs(encoder, bitrate, isH265) {
+  const crf = isH265 ? '28' : '23'
+  if (bitrate) {
+    if (encoder.includes('nvenc') || encoder.includes('amf')) return ['-rc', 'cbr', '-b:v', `${bitrate}k`]
+    return ['-b:v', `${bitrate}k`]
+  }
+  if (encoder.includes('nvenc')) return ['-preset', 'p4', '-tune', 'hq', '-rc', 'vbr', '-cq', crf]
+  if (encoder.includes('amf'))   return ['-quality', 'quality', '-rc', 'cqp', '-qp_i', crf, '-qp_p', String(Number(crf) + 2)]
+  if (encoder.includes('qsv'))   return ['-global_quality', crf, '-look_ahead', '1']
+  return ['-crf', crf, '-preset', 'medium']
+}
+
 function _buildFFmpegArgs(config, mode, frameDir) {
-  const { width, height, fps, codec, audioMode, bitrate, audioPath, outputPath } = config
+  const { width, height, fps, codec, audioMode, bitrate, audioPath, outputPath, encoder: userEncoder } = config
   const args = []
 
   if (mode === 'pipe') {
-    // JPEG frames piped to stdin
     args.push('-f', 'image2pipe', '-framerate', String(fps), '-vcodec', 'mjpeg', '-i', 'pipe:0')
   } else {
-    // JPEG sequence written to disk
     args.push('-framerate', String(fps), '-i', path.join(frameDir, 'frame%08d.jpg'))
   }
 
@@ -159,15 +182,11 @@ function _buildFFmpegArgs(config, mode, frameDir) {
   args.push('-i', audioPath)
 
   // Video codec + quality
-  const isH265 = codec === 'h265'
-  args.push('-c:v', isH265 ? 'libx265' : 'libx264')
+  const isH265  = codec === 'h265'
+  const encoder = _resolveEncoder(userEncoder, isH265)
+  args.push('-c:v', encoder)
   if (isH265) args.push('-tag:v', 'hvc1')
-
-  if (bitrate) {
-    args.push('-b:v', `${bitrate}k`)
-  } else {
-    args.push('-crf', isH265 ? '28' : '23', '-preset', 'medium')
-  }
+  args.push(..._encoderQualityArgs(encoder, bitrate, isH265))
 
   // Pixel format (yuv420p = universal compatibility)
   args.push('-pix_fmt', 'yuv420p')

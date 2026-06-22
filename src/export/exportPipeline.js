@@ -46,12 +46,12 @@ function getAudioDataAtTime(audioLoader, t) {
 
 // ─── Read export settings from exportSettings state ───────────────────────────
 function readExportSettings() {
-  const { width: w, height: h, fps, codec, audioMode, bitrate, outputPath } = exportSettings
+  const { width: w, height: h, fps, codec, encoder, audioMode, bitrate, outputPath } = exportSettings
   // Filename is still read from the DOM so the user can edit it inline
   const outFilename = document.getElementById('output-filename')?.value?.trim()
     || exportSettings.filename
     || 'waveexport.mp4'
-  return { w, h, fps, codec, audioMode, bitrate, outFilename, outputPath }
+  return { w, h, fps, codec, encoder, audioMode, bitrate, outFilename, outputPath }
 }
 
 // ─── Export state ─────────────────────────────────────────────────────────────
@@ -62,7 +62,7 @@ export async function startExport() {
   if (!appState?.loaded) return
 
   _cancelled = false
-  const { w, h, fps, codec, audioMode, bitrate, outFilename, outputPath: pickedPath } = readExportSettings()
+  const { w, h, fps, codec, encoder, audioMode, bitrate, outFilename, outputPath: pickedPath } = readExportSettings()
   const { audioLoader, filePath } = appState
   const duration    = audioLoader.duration
   const totalFrames = Math.ceil(duration * fps)
@@ -73,7 +73,7 @@ export async function startExport() {
   const outputPath = pickedPath || `${audioDir}/${outFilename}`
 
   const config = {
-    width: w, height: h, fps, codec, audioMode, bitrate,
+    width: w, height: h, fps, codec, encoder, audioMode, bitrate,
     audioPath: filePath, outputPath, totalFrames, duration, useDisk,
   }
 

@@ -52,6 +52,7 @@ export function serializeState(audioFilePath) {
       height:    exportSettings.height,
       fps:       exportSettings.fps,
       codec:     exportSettings.codec,
+      encoder:   exportSettings.encoder,
       audioMode: exportSettings.audioMode,
       bitrate:   exportSettings.bitrate,
       filename:  exportSettings.filename,
@@ -88,7 +89,7 @@ export function deserializeState(data) {
   })
 
   // Export settings (outputPath is session-only — never persisted)
-  ;['width','height','fps','codec','audioMode','bitrate','filename'].forEach(k => {
+  ;['width','height','fps','codec','encoder','audioMode','bitrate','filename'].forEach(k => {
     if (ex[k] !== undefined) exportSettings[k] = ex[k]
   })
   exportSettings.outputPath = ''

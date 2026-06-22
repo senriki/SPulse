@@ -366,6 +366,16 @@
             </select>
           </div>
           <div class="control-group">
+            <label class="control-label">Encoder <span class="encoder-badge" id="encoder-badge">…</span></label>
+            <select id="export-encoder" class="select-input">
+              <option value="auto" selected>Auto-detect</option>
+              <option value="nvenc">NVIDIA NVENC</option>
+              <option value="amf">AMD AMF</option>
+              <option value="qsv">Intel QSV</option>
+              <option value="cpu">Software (CPU)</option>
+            </select>
+          </div>
+          <div class="control-group">
             <label class="control-label">Bitrate</label>
             <div class="radio-row">
               <label class="radio-label"><input type="radio" name="bitrate-mode" value="auto" checked> Auto</label>

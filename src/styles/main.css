@@ -556,6 +556,24 @@ html, body {
   background: rgba(255, 107, 53, 0.12);
 }
 
+/* ─── Encoder Badge ──────────────────────────────────────────────────────────── */
+.encoder-badge {
+  display: inline-block;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  background: rgba(125, 133, 144, 0.12);
+  color: var(--color-text-muted);
+  margin-left: 6px;
+  vertical-align: middle;
+}
+.encoder-badge.hw {
+  background: rgba(0, 212, 255, 0.12);
+  color: var(--color-accent);
+}
+
 /* ─── Error Dialog ───────────────────────────────────────────────────────────── */
 .error-log {
   font-family: var(--font-mono);

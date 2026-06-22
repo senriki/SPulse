@@ -5,6 +5,7 @@ export const exportSettings = {
   height:     1080,
   fps:        30,
   codec:      'h264',
+  encoder:    'auto', // 'auto' | 'nvenc' | 'amf' | 'qsv' | 'cpu'
   audioMode:  'passthrough',
   bitrate:    null,   // null = auto CRF; number = manual kbps
   outputPath: '',     // explicit full path from save dialog; empty = auto-derive from audio dir

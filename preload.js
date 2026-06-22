@@ -25,6 +25,10 @@ contextBridge.exposeInMainWorld('api', {
   quit: () =>
     ipcRenderer.invoke('quit'),
 
+  // GPU encoder detection
+  detectGpuEncoders: () =>
+    ipcRenderer.invoke('detect-gpu-encoders'),
+
   // Output path save dialog
   pickOutputPath: (defaultPath) =>
     ipcRenderer.invoke('pick-output-path', { defaultPath }),

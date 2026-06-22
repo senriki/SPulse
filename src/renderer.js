@@ -418,7 +418,8 @@ function _syncDomFromState(vs, es) {
   }
   canvasEngine.setPreviewAspect(es.width, es.height)
 
-  set('export-fps', es.fps); set('export-codec', es.codec); set('audio-mode', es.audioMode)
+  set('export-fps', es.fps); set('export-codec', es.codec); set('export-encoder', es.encoder || 'auto'); set('audio-mode', es.audioMode)
+  _updateEncoderBadge()
   const isManual = es.bitrate !== null
   document.querySelectorAll('[name="bitrate-mode"]').forEach(r => { r.checked = r.value === (isManual ? 'manual' : 'auto') })
   $('bitrate-manual-group')?.classList.toggle('hidden', !isManual)
@@ -543,6 +544,12 @@ function _initExportControls() {
     exportSettings.codec = e.target.value
   })
 
+  // Encoder override
+  document.getElementById('export-encoder')?.addEventListener('change', e => {
+    exportSettings.encoder = e.target.value
+    _updateEncoderBadge()
+  })
+
   // Audio mode
   document.getElementById('audio-mode')?.addEventListener('change', e => {
     exportSettings.audioMode = e.target.value
@@ -582,6 +589,18 @@ function _initExportControls() {
   })
 }
 
+// ─── GPU encoder badge ────────────────────────────────────────────────────────
+let _detectedGpu = { label: 'CPU' }
+
+function _updateEncoderBadge() {
+  const badge = document.getElementById('encoder-badge')
+  if (!badge) return
+  const pref  = exportSettings.encoder || 'auto'
+  const label = pref === 'auto' ? _detectedGpu.label : pref.toUpperCase()
+  badge.textContent = label
+  badge.classList.toggle('hw', label !== 'CPU')
+}
+
 // ─── Wire export settings controls ───────────────────────────────────────────
 _initExportControls()
 
@@ -612,3 +631,8 @@ window.api.onMenuRedo?.(_redo)
 // ─── Init UI components ───────────────────────────────────────────────────────
 initErrorDialog()
 initAboutScreen()
+
+// ─── Detect GPU encoders on startup ──────────────────────────────────────────
+window.api.detectGpuEncoders?.().then(info => {
+  if (info) { _detectedGpu = info; _updateEncoderBadge() }
+})
