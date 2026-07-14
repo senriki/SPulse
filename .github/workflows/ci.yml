@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'build/icon.*'
+  pull_request:
+    branches: [main]
+
+jobs:
+  check:
+    name: Syntax check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check main process syntax
+        run: |
+          node --check main.js
+          node --check preload.js
+          node --check src/export/ffmpegPath.js
+          node --check src/export/gpuDetect.js
+          node --check src/export/frameWriter.js
+          node --check scripts/gen-icon.js
