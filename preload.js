@@ -58,4 +58,12 @@ contextBridge.exposeInMainWorld('api', {
   onMenuSaveProject: (cb) => ipcRenderer.on('menu-save-project',   () => cb()),
   onMenuUndo:        (cb) => ipcRenderer.on('menu-undo',           () => cb()),
   onMenuRedo:        (cb) => ipcRenderer.on('menu-redo',           () => cb()),
+  onMenuCheckUpdates:(cb) => ipcRenderer.on('menu-check-updates',  () => cb()),
+
+  // Auto-updater
+  onUpdateAvailable: (cb) => ipcRenderer.on('update-available', (_, d) => cb(d)),
+  onUpdateProgress:  (cb) => ipcRenderer.on('update-progress',  (_, d) => cb(d)),
+  onUpdateDownloaded:(cb) => ipcRenderer.on('update-downloaded', (_, d) => cb(d)),
+  checkForUpdates:   ()   => ipcRenderer.invoke('check-for-updates'),
+  installUpdate:     ()   => ipcRenderer.invoke('install-update'),
 })

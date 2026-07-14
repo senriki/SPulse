@@ -5,8 +5,41 @@ const { spawn }   = require('child_process')
 const ffmpegBin   = require('./src/export/ffmpegPath')
 const { FrameWriter }       = require('./src/export/frameWriter')
 const { detectGpuEncoders } = require('./src/export/gpuDetect')
+const { autoUpdater }       = require('electron-updater')
 
 let _mainWin = null
+
+// ─── Auto-updater ─────────────────────────────────────────────────────────────
+function _initAutoUpdater() {
+  // Only runs in packaged app — skip silently in dev mode
+  if (!app.isPackaged) return
+
+  autoUpdater.autoDownload    = true
+  autoUpdater.autoInstallOnAppQuit = true
+
+  autoUpdater.on('update-available', info => {
+    _mainWin?.webContents.send('update-available', { version: info.version })
+  })
+
+  autoUpdater.on('download-progress', progress => {
+    _mainWin?.webContents.send('update-progress', {
+      percent: Math.round(progress.percent),
+      transferred: progress.transferred,
+      total: progress.total,
+    })
+  })
+
+  autoUpdater.on('update-downloaded', info => {
+    _mainWin?.webContents.send('update-downloaded', { version: info.version })
+  })
+
+  autoUpdater.on('error', () => {
+    // Silent — don't bother user with network errors on startup check
+  })
+
+  // Check 3 seconds after launch so it doesn't block startup
+  setTimeout(() => autoUpdater.checkForUpdates().catch(() => {}), 3000)
+}
 
 function createWindow() {
   _mainWin = new BrowserWindow({
@@ -49,7 +82,9 @@ function createMenu() {
     {
       label: 'Help',
       submenu: [
-        { label: 'About WaveExport', click: () => _mainWin?.webContents.send('show-about') }
+        { label: 'About WaveExport', click: () => _mainWin?.webContents.send('show-about') },
+        { type: 'separator' },
+        { label: 'Check for Updates…', click: () => _mainWin?.webContents.send('menu-check-updates') }
       ]
     }
   ]
@@ -59,6 +94,7 @@ function createMenu() {
 app.whenReady().then(() => {
   createWindow()
   createMenu()
+  _initAutoUpdater()
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
@@ -70,6 +106,13 @@ app.on('window-all-closed', () => {
 
 // ─── App control ─────────────────────────────────────────────────────────────
 ipcMain.handle('quit', () => app.quit())
+ipcMain.handle('check-for-updates', () => {
+  if (!app.isPackaged) return
+  autoUpdater.checkForUpdates().catch(() => {})
+})
+ipcMain.handle('install-update', () => {
+  autoUpdater.quitAndInstall()
+})
 
 // ─── GPU encoder detection ────────────────────────────────────────────────────
 ipcMain.handle('detect-gpu-encoders', () => detectGpuEncoders())

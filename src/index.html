@@ -10,6 +10,15 @@
   <link rel="stylesheet" href="styles/controls.css">
 </head>
 <body>
+  <div id="update-bar" class="update-bar hidden">
+    <span id="update-msg" class="update-msg"></span>
+    <div id="update-progress-wrap" class="update-progress-wrap hidden">
+      <div id="update-progress-fill" class="update-progress-fill"></div>
+    </div>
+    <button id="btn-update-install" class="update-install-btn hidden">Restart &amp; Install</button>
+    <button id="btn-update-dismiss" class="update-dismiss-btn" title="Dismiss">✕</button>
+  </div>
+
   <div class="app-layout">
 
     <!-- ═══════════════════════════════════════

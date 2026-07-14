@@ -636,3 +636,48 @@ initAboutScreen()
 window.api.detectGpuEncoders?.().then(info => {
   if (info) { _detectedGpu = info; _updateEncoderBadge() }
 })
+
+// ─── Auto-update banner ───────────────────────────────────────────────────────
+;(function _initUpdateBanner() {
+  const bar         = document.getElementById('update-bar')
+  const msgEl       = document.getElementById('update-msg')
+  const progressWrap= document.getElementById('update-progress-wrap')
+  const progressFill= document.getElementById('update-progress-fill')
+  const btnInstall  = document.getElementById('btn-update-install')
+  const btnDismiss  = document.getElementById('btn-update-dismiss')
+  if (!bar) return
+
+  function _show(msg) {
+    msgEl.textContent = msg
+    bar.classList.remove('hidden')
+  }
+
+  btnDismiss.addEventListener('click', () => bar.classList.add('hidden'))
+
+  btnInstall.addEventListener('click', () => window.api.installUpdate?.())
+
+  window.api.onUpdateAvailable?.(({ version }) => {
+    _show(`Versi ${version} tersedia — sedang mengunduh…`)
+    progressWrap.classList.remove('hidden')
+    btnInstall.classList.add('hidden')
+  })
+
+  window.api.onUpdateProgress?.(({ percent }) => {
+    progressFill.style.width = `${percent}%`
+    msgEl.textContent = `Mengunduh update… ${percent}%`
+  })
+
+  window.api.onUpdateDownloaded?.(({ version }) => {
+    progressWrap.classList.add('hidden')
+    btnInstall.classList.remove('hidden')
+    _show(`Update ${version} siap diinstall`)
+  })
+
+  window.api.onMenuCheckUpdates?.(() => {
+    _show('Memeriksa update…')
+    bar.classList.remove('hidden')
+    progressWrap.classList.add('hidden')
+    btnInstall.classList.add('hidden')
+    window.api.checkForUpdates?.()
+  })
+}())
