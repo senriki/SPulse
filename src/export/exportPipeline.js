@@ -130,7 +130,9 @@ export async function startExport() {
       progressModal.update(frame + 1, totalFrames)
     }
 
-    if (!_cancelled) {
+    if (_cancelled) {
+      progressModal.hide()
+    } else {
       progressModal.setMessage('Encoding video…')
       await window.api.exportDone()
     }
