@@ -2,6 +2,8 @@
 
 Desktop app for creating MP4 waveform visualizer videos from audio files. Runs fully offline.
 
+![SPulse preview](docs/assets/img/preview.png)
+
 Built with Electron, Web Audio API, Canvas 2D, and FFmpeg.
 
 ---
