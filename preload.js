@@ -24,6 +24,8 @@ contextBridge.exposeInMainWorld('api', {
   // App control
   quit: () =>
     ipcRenderer.invoke('quit'),
+  revealInFolder: (filePath) =>
+    ipcRenderer.invoke('reveal-in-folder', filePath),
 
   // GPU encoder detection
   detectGpuEncoders: () =>

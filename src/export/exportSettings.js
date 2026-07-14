@@ -8,6 +8,7 @@ export const exportSettings = {
   encoder:    'auto', // 'auto' | 'nvenc' | 'amf' | 'qsv' | 'cpu'
   audioMode:  'passthrough',
   bitrate:    null,   // null = auto CRF; number = manual kbps
-  outputPath: '',     // explicit full path from save dialog; empty = auto-derive from audio dir
-  filename:   'spulse.mp4',
+  outputPath:   '',     // explicit full path from save dialog; empty = auto-derive from audio dir
+  filename:     'spulse.mp4',
+  askOnExport:  false,  // if true, show save dialog every time Export is clicked
 }

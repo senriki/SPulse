@@ -1,26 +1,42 @@
 // Export progress modal — shown during the FFmpeg export pipeline.
 export const progressModal = {
-  _overlay: null,
-  _fill:    null,
-  _stats:   null,
-  _eta:     null,
-  _startTs: 0,
-  _onCancel: null,
+  _overlay:    null,
+  _fill:       null,
+  _stats:      null,
+  _eta:        null,
+  _title:      null,
+  _startTs:    0,
+  _onCancel:   null,
+  _outputPath: null,
 
   init(onCancel) {
     this._overlay  = document.getElementById('export-modal')
     this._fill     = document.getElementById('export-progress-fill')
     this._stats    = document.getElementById('export-progress-stats')
     this._eta      = document.getElementById('export-progress-eta')
+    this._title    = document.getElementById('export-modal-title')
     this._onCancel = onCancel
 
-    document.getElementById('btn-export-cancel')?.addEventListener('click', () => {
-      this._onCancel?.()
-    })
+    // Use onclick so repeated init() calls don't stack listeners
+    const btnCancel = document.getElementById('btn-export-cancel')
+    const btnClose  = document.getElementById('btn-export-close')
+    const btnFolder = document.getElementById('btn-open-folder')
+    if (btnCancel) btnCancel.onclick = () => this._onCancel?.()
+    if (btnClose)  btnClose.onclick  = () => this.hide()
+    if (btnFolder) btnFolder.onclick = () => {
+      if (this._outputPath) window.api.revealInFolder(this._outputPath)
+    }
   },
 
   show(totalFrames) {
-    this._startTs = performance.now()
+    this._startTs    = performance.now()
+    this._outputPath = null
+
+    if (this._title) this._title.textContent = 'Exporting MP4…'
+    document.getElementById('btn-export-cancel')?.classList.remove('hidden')
+    document.getElementById('btn-export-close')?.classList.add('hidden')
+    document.getElementById('btn-open-folder')?.classList.add('hidden')
+
     this._overlay?.classList.remove('hidden')
     this.update(0, totalFrames)
   },
@@ -43,5 +59,18 @@ export const progressModal = {
     if (this._eta)   this._eta.textContent   = ''
   },
 
-  hide() { this._overlay?.classList.add('hidden') },
+  complete(outputPath) {
+    this._outputPath = outputPath
+    if (this._title) this._title.textContent = 'Export Complete'
+    if (this._fill)  this._fill.style.width  = '100%'
+    this.setMessage(`✓ Saved: ${outputPath.replace(/.*[\\/]/, '')}`)
+    document.getElementById('btn-export-cancel')?.classList.add('hidden')
+    document.getElementById('btn-export-close')?.classList.remove('hidden')
+    document.getElementById('btn-open-folder')?.classList.remove('hidden')
+  },
+
+  hide() {
+    this._overlay?.classList.add('hidden')
+    this._outputPath = null
+  },
 }

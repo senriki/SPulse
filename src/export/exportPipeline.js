@@ -78,9 +78,22 @@ export async function startExport() {
   const totalFrames = Math.ceil(duration * fps)
   const useDisk     = (w >= 3840 || duration >= 180)  // 4K or >3 min → disk frames
 
-  // Use explicitly picked path (from save dialog), or derive from audio source dir
-  const audioDir   = filePath.replace(/[\\/][^\\/]+$/, '')
-  const outputPath = pickedPath || `${audioDir}/${outFilename}`
+  // Determine output path — ask every time if the option is enabled
+  const audioDir = filePath.replace(/[\\/][^\\/]+$/, '')
+  let outputPath = pickedPath || `${audioDir}/${outFilename}`
+
+  if (exportSettings.askOnExport) {
+    const picked = await window.api.pickOutputPath(outputPath)
+    if (!picked) {
+      _exporting = false
+      if (btnExport) btnExport.disabled = false
+      return
+    }
+    outputPath = picked
+    exportSettings.outputPath = picked
+    const filenameEl = document.getElementById('output-filename')
+    if (filenameEl) filenameEl.value = picked.replace(/.*[\\/]/, '')
+  }
 
   const config = {
     width: w, height: h, fps, codec, encoder, audioMode, bitrate,
@@ -98,8 +111,7 @@ export async function startExport() {
   window.api.removeExportListeners()
   window.api.onExportProgress(d => progressModal.update(d.framesWritten, totalFrames))
   window.api.onExportComplete(d => {
-    progressModal.setMessage(`✓ Saved: ${d.outputPath}`)
-    setTimeout(() => progressModal.hide(), 3000)
+    progressModal.complete(d.outputPath)
   })
   window.api.onExportError(d => {
     progressModal.hide()

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron')
+const { app, BrowserWindow, ipcMain, dialog, Menu, shell } = require('electron')
 const path        = require('path')
 const fs          = require('fs')
 const { spawn }   = require('child_process')
@@ -110,6 +110,7 @@ app.on('window-all-closed', () => {
 
 // ─── App control ─────────────────────────────────────────────────────────────
 ipcMain.handle('quit', () => app.quit())
+ipcMain.handle('reveal-in-folder', (_, filePath) => shell.showItemInFolder(filePath))
 ipcMain.handle('get-app-version', () => app.getVersion())
 ipcMain.handle('check-for-updates', () => {
   if (!app.isPackaged) return

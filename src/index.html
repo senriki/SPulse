@@ -410,6 +410,10 @@
               <input type="text" id="output-filename" class="text-input text-input-sm" placeholder="audio-spulse.mp4">
               <button class="btn btn-icon-sm" id="btn-pick-output" title="Choose output location">…</button>
             </div>
+            <label class="checkbox-label mt-4">
+              <input type="checkbox" id="ask-on-export">
+              Ask where to save every time
+            </label>
           </div>
         </section>
 
@@ -440,13 +444,17 @@
   <!-- Export Progress Modal -->
   <div id="export-modal" class="modal-overlay hidden" role="dialog" aria-modal="true">
     <div class="modal">
-      <h2 class="modal-title">Exporting MP4…</h2>
+      <h2 class="modal-title" id="export-modal-title">Exporting MP4…</h2>
       <div class="progress-track">
         <div class="progress-fill" id="export-progress-fill"></div>
       </div>
       <p class="progress-stats" id="export-progress-stats">Preparing…</p>
       <p class="progress-eta"   id="export-progress-eta"></p>
-      <button class="btn btn-destructive" id="btn-export-cancel">Cancel Export</button>
+      <div class="modal-actions">
+        <button class="btn btn-secondary hidden" id="btn-open-folder">Open Folder</button>
+        <button class="btn btn-destructive" id="btn-export-cancel">Cancel Export</button>
+        <button class="btn btn-secondary hidden" id="btn-export-close">Close</button>
+      </div>
     </div>
   </div>
 

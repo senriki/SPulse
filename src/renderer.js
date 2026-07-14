@@ -637,6 +637,11 @@ function _initExportControls() {
   outputFilename?.addEventListener('input', () => {
     exportSettings.outputPath = ''
   })
+
+  // Ask-on-export toggle
+  document.getElementById('ask-on-export')?.addEventListener('change', e => {
+    exportSettings.askOnExport = e.target.checked
+  })
 }
 
 // ─── GPU encoder badge ────────────────────────────────────────────────────────
