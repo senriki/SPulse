@@ -14,11 +14,11 @@ jobs:
       matrix:
         include:
           - os: windows-latest
-            build_cmd: npm run build:win
+            args: --win
           - os: macos-latest
-            build_cmd: npm run build:mac
+            args: --mac
           - os: ubuntu-latest
-            build_cmd: npm run build:linux
+            args: --linux
 
     steps:
       - uses: actions/checkout@v4
@@ -38,4 +38,4 @@ jobs:
       - name: Build & publish to GitHub Releases
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ${{ matrix.build_cmd }} --publish always
+        run: npx electron-builder ${{ matrix.args }} --publish always
