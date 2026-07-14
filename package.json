@@ -73,7 +73,7 @@
     "publish": {
       "provider": "github",
       "owner": "senriki",
-      "repo": "audio-visualizer",
+      "repo": "SPulse",
       "releaseType": "release"
     }
   }
