@@ -33,8 +33,12 @@ function _initAutoUpdater() {
     _mainWin?.webContents.send('update-downloaded', { version: info.version })
   })
 
+  autoUpdater.on('update-not-available', () => {
+    _mainWin?.webContents.send('update-not-available')
+  })
+
   autoUpdater.on('error', () => {
-    // Silent — don't bother user with network errors on startup check
+    _mainWin?.webContents.send('update-not-available')
   })
 
   // Check 3 seconds after launch so it doesn't block startup

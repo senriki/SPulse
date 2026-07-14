@@ -656,7 +656,21 @@ window.api.detectGpuEncoders?.().then(info => {
 
   btnInstall.addEventListener('click', () => window.api.installUpdate?.())
 
+  let _dismissTimer = null
+  function _autoDismiss(ms = 3000) {
+    clearTimeout(_dismissTimer)
+    _dismissTimer = setTimeout(() => bar.classList.add('hidden'), ms)
+  }
+
+  window.api.onUpdateNotAvailable?.(() => {
+    progressWrap.classList.add('hidden')
+    btnInstall.classList.add('hidden')
+    _show('Sudah versi terbaru')
+    _autoDismiss(3000)
+  })
+
   window.api.onUpdateAvailable?.(({ version }) => {
+    clearTimeout(_dismissTimer)
     _show(`Versi ${version} tersedia — sedang mengunduh…`)
     progressWrap.classList.remove('hidden')
     btnInstall.classList.add('hidden')

@@ -61,9 +61,10 @@ contextBridge.exposeInMainWorld('api', {
   onMenuCheckUpdates:(cb) => ipcRenderer.on('menu-check-updates',  () => cb()),
 
   // Auto-updater
-  onUpdateAvailable: (cb) => ipcRenderer.on('update-available', (_, d) => cb(d)),
-  onUpdateProgress:  (cb) => ipcRenderer.on('update-progress',  (_, d) => cb(d)),
-  onUpdateDownloaded:(cb) => ipcRenderer.on('update-downloaded', (_, d) => cb(d)),
+  onUpdateAvailable:    (cb) => ipcRenderer.on('update-available',     (_, d) => cb(d)),
+  onUpdateProgress:     (cb) => ipcRenderer.on('update-progress',      (_, d) => cb(d)),
+  onUpdateDownloaded:   (cb) => ipcRenderer.on('update-downloaded',    (_, d) => cb(d)),
+  onUpdateNotAvailable: (cb) => ipcRenderer.on('update-not-available', () => cb()),
   checkForUpdates:   ()   => ipcRenderer.invoke('check-for-updates'),
   installUpdate:     ()   => ipcRenderer.invoke('install-update'),
 })
