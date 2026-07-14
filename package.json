@@ -2,6 +2,8 @@
   "name": "waveexport",
   "version": "1.0.0",
   "description": "Audio waveform visualizer — export MP4 videos from audio files",
+  "author": "Senriki <senrikis@gmail.com>",
+  "license": "MIT",
   "main": "main.js",
   "scripts": {
     "start": "electron .",

@@ -5,9 +5,6 @@ This file defines instructions for the `audio-visualizer` subproject only.
 
 WaveExport is a cross-platform Electron desktop app that imports audio files and exports MP4 waveform visualizer videos. It runs fully offline — no cloud, no accounts, no telemetry.
 
-PRD: `WaveExport_PRD_v1.0.docx` (in this directory)
-Implementation plan: `~/.claude/tasks/noble-dawn-96/` (session `noble-dawn-96`)
-
 ## Tech Stack
 | Layer | Technology |
 |---|---|

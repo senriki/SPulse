@@ -41,7 +41,7 @@ Output is written to `dist/`.
 - **6 visualizer styles**: Classic Bar, Mirror Bar, Smooth Line, Filled Wave, Radial Pulse, Spectrum Glow
 - **Backgrounds**: solid color, linear gradient, static image (with blur/darken), looping video
 - **Text overlay**: title + artist, 5 positions, custom XY, font/size/color/opacity
-- **Export**: MP4 via FFmpeg — Full HD, 4K, Shorts/Reels (9:16), Square (1:1), or custom resolution; 24/30/60 fps; H.264 or H.265
+- **Export**: MP4 via FFmpeg — Full HD, 4K, Shorts/Reels (9:16), Square (1:1), or custom resolution; 24/30/60 fps; H.264 or H.265; hardware-accelerated encoding via NVIDIA NVENC, AMD AMF, or Intel QSV (auto-detected, with manual override)
 - **Project save/load**: `.wvx` JSON format preserves all settings and the audio file path
 - **Undo/redo**: 20-step history for visualizer style changes (Ctrl+Z / Ctrl+Y)
 
