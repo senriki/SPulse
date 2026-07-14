@@ -6,8 +6,29 @@ on:
       - 'v*'
 
 jobs:
-  release:
-    name: Build & publish — ${{ matrix.os }}
+  # Step 1: create the GitHub release once before any build starts
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      release_id: ${{ steps.create.outputs.id }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create release
+        id: create
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+
+  # Step 2: build on each OS and upload artifacts to the release
+  build:
+    name: Build & upload — ${{ matrix.os }}
+    needs: create-release
     runs-on: ${{ matrix.os }}
     permissions:
       contents: write
@@ -37,7 +58,7 @@ jobs:
       - name: Generate icons
         run: node scripts/gen-icon.js
 
-      - name: Build & publish to GitHub Releases
+      - name: Build & upload to GitHub Releases
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx electron-builder ${{ matrix.args }} --publish always
