@@ -6,6 +6,11 @@ export function initAboutScreen() {
   document.getElementById('about-modal-close')?.addEventListener('click', () => modal.classList.add('hidden'))
   modal.addEventListener('click', e => { if (e.target === modal) modal.classList.add('hidden') })
 
-  // Main process sends 'show-about' when the user clicks Help > About
+  // Populate version from package.json via app.getVersion() (main process)
+  window.api.getAppVersion?.().then(v => {
+    const el = document.getElementById('about-version')
+    if (el) el.textContent = `Version ${v}`
+  })
+
   window.api.onShowAbout?.(() => modal.classList.remove('hidden'))
 }

@@ -110,6 +110,7 @@ app.on('window-all-closed', () => {
 
 // ─── App control ─────────────────────────────────────────────────────────────
 ipcMain.handle('quit', () => app.quit())
+ipcMain.handle('get-app-version', () => app.getVersion())
 ipcMain.handle('check-for-updates', () => {
   if (!app.isPackaged) return
   autoUpdater.checkForUpdates().catch(() => {})

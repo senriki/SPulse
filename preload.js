@@ -65,6 +65,7 @@ contextBridge.exposeInMainWorld('api', {
   onUpdateProgress:     (cb) => ipcRenderer.on('update-progress',      (_, d) => cb(d)),
   onUpdateDownloaded:   (cb) => ipcRenderer.on('update-downloaded',    (_, d) => cb(d)),
   onUpdateNotAvailable: (cb) => ipcRenderer.on('update-not-available', () => cb()),
+  getAppVersion:     ()   => ipcRenderer.invoke('get-app-version'),
   checkForUpdates:   ()   => ipcRenderer.invoke('check-for-updates'),
   installUpdate:     ()   => ipcRenderer.invoke('install-update'),
 })
