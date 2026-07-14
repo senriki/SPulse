@@ -30,7 +30,7 @@ export const appState = {
 window.appState = appState   // expose for non-module script interop if needed
 
 // ─── Project state ────────────────────────────────────────────────────────────
-let _projectFilePath = null   // path of the currently open .wvx file
+let _projectFilePath = null   // path of the currently open .spx file
 let _isDirty         = false  // true when state has changed since last save/load
 
 // ─── DOM refs ────────────────────────────────────────────────────────────────
@@ -86,7 +86,7 @@ async function loadAudio(arrayBuffer, filePath) {
 
     // Suggest default output filename and sync exportSettings
     const baseName = loader.fileName.replace(/\.[^.]+$/, '')
-    const defaultFilename = `${baseName}-waveexport.mp4`
+    const defaultFilename = `${baseName}-spulse.mp4`
     if (outputFilename) outputFilename.value = defaultFilename
     exportSettings.filename    = defaultFilename
     exportSettings.outputPath  = ''   // clear any previous explicit path
@@ -336,9 +336,9 @@ function _clearDirty() {
 }
 
 function _updateTitleBar() {
-  if (!_projectFilePath) { document.title = 'WaveExport'; return }
-  const name = _projectFilePath.replace(/.*[\\/]/, '').replace(/\.wvx$/i, '')
-  document.title = _isDirty ? `${name}* — WaveExport` : `${name} — WaveExport`
+  if (!_projectFilePath) { document.title = 'SPulse'; return }
+  const name = _projectFilePath.replace(/.*[\\/]/, '').replace(/\.spx$/i, '')
+  document.title = _isDirty ? `${name}* — SPulse` : `${name} — SPulse`
 }
 
 // ─── Project: sync DOM controls from state after load ─────────────────────────
@@ -426,15 +426,15 @@ function _syncDomFromState(vs, es) {
   if (isManual) set('manual-bitrate', es.bitrate)
 
   const filenameEl = $('output-filename')
-  if (filenameEl) filenameEl.value = es.filename || 'waveexport.mp4'
+  if (filenameEl) filenameEl.value = es.filename || 'spulse.mp4'
 }
 
 // ─── Project: save ────────────────────────────────────────────────────────────
 async function _saveProject() {
   const defaultPath = _projectFilePath || (
     appState.fileName
-      ? appState.fileName.replace(/\.[^.]+$/, '') + '.wvx'
-      : 'project.wvx'
+      ? appState.fileName.replace(/\.[^.]+$/, '') + '.spx'
+      : 'project.spx'
   )
   const data      = serializeState(appState.filePath || '')
   const savedPath = await window.api.saveProject(data, defaultPath)
@@ -571,7 +571,7 @@ function _initExportControls() {
 
   // Output path picker — opens a save dialog
   document.getElementById('btn-pick-output')?.addEventListener('click', async () => {
-    const filename   = outputFilename?.value || exportSettings.filename || 'waveexport.mp4'
+    const filename   = outputFilename?.value || exportSettings.filename || 'spulse.mp4'
     const audioDir   = appState.filePath
       ? appState.filePath.replace(/[\\/][^\\/]+$/, '')
       : ''

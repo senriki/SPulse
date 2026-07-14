@@ -9,5 +9,5 @@ export const exportSettings = {
   audioMode:  'passthrough',
   bitrate:    null,   // null = auto CRF; number = manual kbps
   outputPath: '',     // explicit full path from save dialog; empty = auto-derive from audio dir
-  filename:   'waveexport.mp4',
+  filename:   'spulse.mp4',
 }

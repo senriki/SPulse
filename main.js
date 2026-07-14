@@ -82,7 +82,7 @@ function createMenu() {
     {
       label: 'Help',
       submenu: [
-        { label: 'About WaveExport', click: () => _mainWin?.webContents.send('show-about') },
+        { label: 'About SPulse', click: () => _mainWin?.webContents.send('show-about') },
         { type: 'separator' },
         { label: 'Check for Updates…', click: () => _mainWin?.webContents.send('menu-check-updates') }
       ]
@@ -145,8 +145,8 @@ ipcMain.handle('open-file-dialog', async (event, { title, extensions }) => {
 ipcMain.handle('save-project', async (event, { data, defaultPath }) => {
   const { canceled, filePath } = await dialog.showSaveDialog({
     title: 'Save Project',
-    defaultPath: defaultPath || 'project.wvx',
-    filters: [{ name: 'WaveExport Project', extensions: ['wvx'] }]
+    defaultPath: defaultPath || 'project.spx',
+    filters: [{ name: 'SPulse Project', extensions: ['spx'] }]
   })
   if (canceled || !filePath) return null
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8')
@@ -156,7 +156,7 @@ ipcMain.handle('save-project', async (event, { data, defaultPath }) => {
 ipcMain.handle('load-project', async () => {
   const { canceled, filePaths } = await dialog.showOpenDialog({
     title: 'Open Project',
-    filters: [{ name: 'WaveExport Project', extensions: ['wvx'] }],
+    filters: [{ name: 'SPulse Project', extensions: ['spx'] }],
     properties: ['openFile']
   })
   if (canceled || filePaths.length === 0) return null
@@ -179,7 +179,7 @@ ipcMain.handle('load-audio-path', async (event, filePath) => {
 ipcMain.handle('pick-output-path', async (event, { defaultPath }) => {
   const { canceled, filePath } = await dialog.showSaveDialog({
     title: 'Save MP4 Video',
-    defaultPath: defaultPath || 'waveexport.mp4',
+    defaultPath: defaultPath || 'spulse.mp4',
     filters: [{ name: 'MP4 Video', extensions: ['mp4'] }]
   })
   if (canceled || !filePath) return null

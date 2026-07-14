@@ -1,15 +1,15 @@
-// Serializes and deserializes app state to/from the .wvx project file format (JSON).
+// Serializes and deserializes app state to/from the .spx project file format (JSON).
 // Does NOT touch the DOM — caller handles DOM sync after deserializeState().
 import { visualizerState } from '../visualizer/visualizerState.js'
 import { exportSettings }  from '../export/exportSettings.js'
 
-export const WVX_VERSION = '1.0'
+export const SPX_VERSION = '1.0'
 
 // Build a plain serializable object from current runtime state.
 export function serializeState(audioFilePath) {
   const { background: bg, overlay: ov } = visualizerState
   return {
-    version: WVX_VERSION,
+    version: SPX_VERSION,
     audioPath: audioFilePath || '',
     visualizer: {
       mode:             visualizerState.mode,
@@ -60,7 +60,7 @@ export function serializeState(audioFilePath) {
   }
 }
 
-// Apply data from a parsed .wvx JSON to the runtime state singletons.
+// Apply data from a parsed .spx JSON to the runtime state singletons.
 // Returns { audioPath } so the caller can re-load the audio file.
 export function deserializeState(data) {
   const vs = data.visualizer || {}

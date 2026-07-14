@@ -15,7 +15,7 @@ class FrameWriter {
 
   // Create temp directory; returns its path
   init() {
-    this.dir   = fs.mkdtempSync(path.join(os.tmpdir(), 'waveexport-'))
+    this.dir   = fs.mkdtempSync(path.join(os.tmpdir(), 'spulse-'))
     this.count = 0
     return this.dir
   }

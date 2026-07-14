@@ -1,7 +1,7 @@
 {
-  "name": "waveexport",
+  "name": "spulse",
   "version": "1.0.0",
-  "description": "Audio waveform visualizer — export MP4 videos from audio files",
+  "description": "Audio waveform visualizer and MP4 exporter",
   "author": "Senriki <senrikis@gmail.com>",
   "license": "MIT",
   "main": "main.js",
@@ -22,8 +22,8 @@
     "electron-builder": "^24.13.3"
   },
   "build": {
-    "appId": "com.waveexport.app",
-    "productName": "WaveExport",
+    "appId": "com.senriki.spulse",
+    "productName": "SPulse",
     "asar": true,
     "asarUnpack": [
       "node_modules/ffmpeg-static/**"

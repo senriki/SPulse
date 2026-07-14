@@ -50,7 +50,7 @@ function readExportSettings() {
   // Filename is still read from the DOM so the user can edit it inline
   const outFilename = document.getElementById('output-filename')?.value?.trim()
     || exportSettings.filename
-    || 'waveexport.mp4'
+    || 'spulse.mp4'
   return { w, h, fps, codec, encoder, audioMode, bitrate, outFilename, outputPath }
 }
 

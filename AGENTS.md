@@ -3,7 +3,7 @@
 ## Scope
 This file defines instructions for the `audio-visualizer` subproject only.
 
-WaveExport is a cross-platform Electron desktop app that imports audio files and exports MP4 waveform visualizer videos. It runs fully offline — no cloud, no accounts, no telemetry.
+SPulse is a cross-platform Electron desktop app that imports audio files and exports MP4 waveform visualizer videos. It runs fully offline — no cloud, no accounts, no telemetry.
 
 ## Tech Stack
 | Layer | Technology |
@@ -61,7 +61,7 @@ audio-visualizer/
 │   ├── history/
 │   │   └── historyManager.js  # Undo/redo stack for style changes
 │   ├── project/
-│   │   └── projectManager.js  # .wvx JSON save/load
+│   │   └── projectManager.js  # .spx JSON save/load
 │   ├── ui/
 │   │   ├── errorDialog.js
 │   │   └── aboutScreen.js
@@ -106,7 +106,7 @@ Dark-mode only. Never introduce light-mode styles.
 | Destructive Action | `#FF6B35` |
 
 ### State Management
-All visualizer configuration lives in `src/visualizer/visualizerState.js` as a single plain object. Controls mutate this object; the canvas engine reads from it each frame. This object is also what gets serialized to `.wvx` project files.
+All visualizer configuration lives in `src/visualizer/visualizerState.js` as a single plain object. Controls mutate this object; the canvas engine reads from it each frame. This object is also what gets serialized to `.spx` project files.
 
 ## Key Constraints
 - **Fully offline** — no external HTTP calls at runtime. Do not add any analytics, telemetry, or remote fetch calls.
