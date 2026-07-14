@@ -1,4 +1,4 @@
-.PHONY: run build build-win build-mac build-linux icon install clean
+.PHONY: run build build-win build-win-portable build-mac build-linux icon install clean
 
 # ── Dev ───────────────────────────────────────────────────────────────────────
 run:
@@ -17,6 +17,9 @@ build:
 
 build-win:
 	npm run build:win
+
+build-win-portable:
+	npm run build:win:portable
 
 build-mac:
 	npm run build:mac

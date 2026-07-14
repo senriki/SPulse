@@ -27,6 +27,7 @@ make run
 | `make install` | Install dependencies |
 | `make build` | Package for the current platform |
 | `make build-win` | Build Windows installer (.exe via NSIS) |
+| `make build-win-portable` | Build Windows portable .exe (no install needed, good for quick testing) |
 | `make build-mac` | Build macOS disk image (.dmg) |
 | `make build-linux` | Build Linux AppImage |
 | `make clean` | Remove `dist/` and `out/` build artifacts |
@@ -39,11 +40,13 @@ Output is written to `dist/`.
 
 - **Import**: MP3, WAV, FLAC, AAC, OGG, M4A — drag-and-drop or Ctrl+O
 - **6 visualizer styles**: Classic Bar, Mirror Bar, Smooth Line, Filled Wave, Radial Pulse, Spectrum Glow
-- **Backgrounds**: solid color, linear gradient, static image (with blur/darken), looping video
+- **Drag to reposition**: click and drag the visualizer directly on the canvas to adjust its vertical position — syncs with the Y Offset slider in the panel
+- **Backgrounds**: solid color, linear gradient, static image (with blur/darken), looping video — thumbnail preview appears in the panel immediately after selecting a file
 - **Text overlay**: title + artist, 5 positions, custom XY, font/size/color/opacity
 - **Export**: MP4 via FFmpeg — Full HD, 4K, Shorts/Reels (9:16), Square (1:1), or custom resolution; 24/30/60 fps; H.264 or H.265; hardware-accelerated encoding via NVIDIA NVENC, AMD AMF, or Intel QSV (auto-detected, with manual override)
 - **Project save/load**: `.spx` JSON format preserves all settings and the audio file path
 - **Undo/redo**: 20-step history for visualizer style changes (Ctrl+Z / Ctrl+Y)
+- **Auto-update**: checks GitHub Releases on startup and downloads updates in the background; a banner appears when a new version is ready to install
 
 ## Keyboard Shortcuts
 
@@ -57,6 +60,23 @@ Output is written to `dist/`.
 | `Ctrl+Y` | Redo |
 | `Ctrl+Q` | Quit |
 | `Escape` | Close modal |
+
+---
+
+## Known Issues & Tips
+
+### Windows: SmartScreen warning on install
+
+The installer is not code-signed, so Windows SmartScreen will show an "Unknown publisher" warning the first time it runs. Click **More info → Run anyway** to proceed. The warning disappears over time as more users install the app and Microsoft builds reputation for the binary.
+
+To eliminate the warning permanently, a paid code signing certificate (OV or EV) from a CA such as DigiCert or Sectigo is required.
+
+### Windows: export blocked by Controlled Folder Access
+
+Windows Defender's **Ransomware protection → Controlled folder access** blocks apps from writing to protected folders (Desktop, Documents, Pictures, etc.). If export fails silently or with a permissions error, either:
+
+1. Choose an output folder outside the protected list (e.g. a subfolder you created in `C:\Users\<you>\Videos`)
+2. Or whitelist SPulse: **Windows Security → Virus & threat protection → Ransomware protection → Allow an app through Controlled folder access → Add SPulse**
 
 ---
 

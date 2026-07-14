@@ -9,6 +9,35 @@ function _toFileURL(filePath) {
   return normalized.startsWith('/') ? `file://${normalized}` : `file:///${normalized}`
 }
 
+function _drawImageThumb(img, canvasId) {
+  const thumb = document.getElementById(canvasId)
+  if (!thumb) return
+  thumb.width = 160; thumb.height = 90
+  const tc = thumb.getContext('2d')
+  const scale = Math.max(160 / img.naturalWidth, 90 / img.naturalHeight)
+  const sw = img.naturalWidth * scale, sh = img.naturalHeight * scale
+  tc.drawImage(img, (160 - sw) / 2, (90 - sh) / 2, sw, sh)
+  thumb.classList.remove('hidden')
+}
+
+function _captureVideoThumb(vidEl, canvasId) {
+  const capture = () => {
+    const thumb = document.getElementById(canvasId)
+    if (!thumb) return
+    try {
+      thumb.width = 160; thumb.height = 90
+      thumb.getContext('2d').drawImage(vidEl, 0, 0, 160, 90)
+      thumb.classList.remove('hidden')
+    } catch {}
+    window.canvasEngine?.stop()
+  }
+  if (vidEl.readyState >= 2) {
+    capture()
+  } else {
+    vidEl.addEventListener('canplay', capture, { once: true })
+  }
+}
+
 class BackgroundRenderer {
   constructor() {
     this._videoBg = new VideoBackground()
@@ -38,11 +67,17 @@ class BackgroundRenderer {
     if (bgState.imagePath) {
       const img = new Image()
       img.src = _toFileURL(bgState.imagePath)
-      img.onload  = () => { bgState.imageEl = img }
+      img.onload = () => {
+        bgState.imageEl = img
+        _drawImageThumb(img, 'bg-image-thumb')
+        window.canvasEngine?.stop()
+      }
       img.onerror = () => console.warn('Could not reload background image:', bgState.imagePath)
     }
     if (bgState.videoPath) {
       this._videoBg.load(bgState.videoPath)
+      const vidEl = this._videoBg.el
+      if (vidEl) _captureVideoThumb(vidEl, 'bg-video-thumb')
     }
   }
 
@@ -59,15 +94,17 @@ class BackgroundRenderer {
       })
       if (!filePath) return
 
+      if (imgName) imgName.textContent = filePath.split(/[\\/]/).pop()
+
       const img = new Image()
       img.src = _toFileURL(filePath)
       img.onload = () => {
         bgState.imageEl   = img
         bgState.imagePath = filePath
+        _drawImageThumb(img, 'bg-image-thumb')
+        window.canvasEngine?.stop()
       }
       img.onerror = () => console.warn('Failed to load background image:', filePath)
-
-      if (imgName) imgName.textContent = filePath.split(/[\\/]/).pop()
     })
 
     // ── Video picker ────────────────────────────────────────────────────────
@@ -84,6 +121,9 @@ class BackgroundRenderer {
       this._videoBg.load(filePath)
       bgState.videoPath = filePath
       if (vidName) vidName.textContent = filePath.split(/[\\/]/).pop()
+
+      const vidEl = this._videoBg.el
+      if (vidEl) _captureVideoThumb(vidEl, 'bg-video-thumb')
     })
   }
 }

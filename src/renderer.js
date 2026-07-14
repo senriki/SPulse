@@ -175,6 +175,56 @@ function _seekFromEvent(e) {
   if (!appState.analyser.isPlaying) canvasEngine.stop()
 }
 
+// ─── Visualizer drag-to-reposition ───────────────────────────────────────────
+const canvasWrapper   = document.getElementById('canvas-wrapper')
+let _vizDragging      = false
+let _vizDragStartY    = 0
+let _vizDragStartOff  = 0
+
+window.addEventListener('audio-loaded', () => {
+  canvasWrapper?.classList.add('viz-draggable')
+})
+
+canvasWrapper?.addEventListener('mousedown', e => {
+  if (e.button !== 0 || !appState.loaded) return
+  _vizDragging     = true
+  _vizDragStartY   = e.clientY
+  _vizDragStartOff = visualizerState.yOffset
+  canvasWrapper.classList.add('viz-dragging')
+  historyManager.push(_snapshotVS())
+  e.preventDefault()
+})
+
+document.addEventListener('mousemove', e => {
+  if (!_vizDragging) return
+  const cssH  = canvasWrapper.clientHeight
+  const logH  = canvasEngine.r2d?.canvas.height ?? 720
+  const scale = cssH > 0 ? logH / cssH : 1
+  const delta = Math.round((e.clientY - _vizDragStartY) * scale)
+  const newOff = Math.max(-400, Math.min(400, _vizDragStartOff + delta))
+
+  if (visualizerState.centerVertically && Math.abs(delta) > 4) {
+    visualizerState.centerVertically = false
+    const chk = document.getElementById('waveform-center')
+    if (chk) chk.checked = false
+  }
+
+  visualizerState.yOffset = newOff
+  const slider  = document.getElementById('y-offset')
+  const display = document.getElementById('y-offset-val')
+  if (slider)  slider.value        = String(newOff)
+  if (display) display.textContent = `${newOff}px`
+
+  if (!appState.analyser?.isPlaying) canvasEngine.stop()
+}, { passive: true })
+
+document.addEventListener('mouseup', () => {
+  if (!_vizDragging) return
+  _vizDragging = false
+  canvasWrapper?.classList.remove('viz-dragging')
+  _setDirty()
+})
+
 // ─── Drop zone: drag-and-drop ─────────────────────────────────────────────────
 dropZone.addEventListener('dragover', e => {
   e.preventDefault()

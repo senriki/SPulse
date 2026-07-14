@@ -242,6 +242,9 @@ html, body {
   height: 100%;
 }
 
+.canvas-wrapper.viz-draggable         { cursor: grab; }
+.canvas-wrapper.viz-draggable.viz-dragging { cursor: grabbing; }
+
 /* Drop overlay — shown when no audio is loaded */
 .drop-overlay {
   position: absolute;

@@ -251,6 +251,13 @@ function _buildFFmpegArgs(config, mode, frameDir) {
   return args
 }
 
+function _exportErrorMsg(code, log) {
+  if (/permission denied|access is denied|EPERM/i.test(log)) {
+    return 'Output folder is protected by Windows Controlled Folder Access. Choose a different output location, or go to Windows Security → Virus & threat protection → Ransomware protection → Allow an app through Controlled folder access → add SPulse.'
+  }
+  return `FFmpeg exited with code ${code}`
+}
+
 // export-video: validate config, spawn FFmpeg (pipe mode) or init disk writer
 ipcMain.handle('export-video', async (event, config) => {
   // Clean up any previous session
@@ -291,7 +298,7 @@ ipcMain.handle('export-video', async (event, config) => {
         event.sender.send('export-complete', { outputPath: config.outputPath })
       } else {
         const excerpt = session.ffmpegLog.slice(-800)
-        event.sender.send('export-error', { error: `FFmpeg exited with code ${code}`, log: excerpt })
+        event.sender.send('export-error', { error: _exportErrorMsg(code, excerpt), log: excerpt })
       }
       session.frameWriter?.cleanup()
       _session = null
@@ -365,7 +372,7 @@ ipcMain.handle('export-done', async (event) => {
           resolve({ ok: true })
         } else {
           const excerpt = (session.ffmpegLog || '').slice(-800)
-          event.sender.send('export-error', { error: `FFmpeg exited with code ${code}`, log: excerpt })
+          event.sender.send('export-error', { error: _exportErrorMsg(code, excerpt), log: excerpt })
           resolve({ ok: false })
         }
         _session = null

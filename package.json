@@ -1,6 +1,6 @@
 {
   "name": "spulse",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Audio waveform visualizer and MP4 exporter",
   "author": "Senriki <senrikis@gmail.com>",
   "license": "MIT",
@@ -9,6 +9,7 @@
     "start": "electron .",
     "build": "electron-builder",
     "build:win": "electron-builder --win",
+    "build:win:portable": "electron-builder --win portable --publish never",
     "build:mac": "electron-builder --mac",
     "build:linux": "electron-builder --linux"
   },

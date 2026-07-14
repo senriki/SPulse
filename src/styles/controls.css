@@ -348,3 +348,17 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* Background thumbnail preview */
+.bg-thumb {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  margin-top: 8px;
+  border-radius: 4px;
+  border: 1px solid var(--color-panel-border);
+  background: #000;
+  object-fit: cover;
+}
+.bg-thumb.hidden { display: none; }
