@@ -96,6 +96,10 @@ See `build/README.md` for icon creation instructions.
 
 Installer size target: < 250 MB. The bundled FFmpeg binary (~50–80 MB depending on platform) is the largest single component.
 
+### Releases
+
+Stable builds are tagged `vX.Y.Z` and published as the "Latest Release" on GitHub. Release candidates are tagged `vX.Y.Z-rc.N` and published as pre-releases (amber app icon, distinct from stable's cyan) so they can be tested without affecting auto-update for stable users. See `AGENTS.md` → Release Flow for the full tagging process.
+
 ---
 
 ## License

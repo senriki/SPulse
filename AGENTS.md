@@ -135,6 +135,49 @@ Rules:
 - One logical change per commit. Version bumps are their own commit.
 - Do not mix feature + fix in a single commit.
 
+## Release Flow
+
+Two GitHub Actions pipelines share one reusable workflow (`.github/workflows/build-release.yml`), which is a `workflow_call` that builds Win/Mac/Linux and creates the GitHub Release. What differs is only which **tag pattern** triggers which caller workflow — branches themselves are irrelevant to CI, only the tag name matters.
+
+| Caller workflow | Tag pattern | `prerelease` | Icon channel |
+|---|---|---|---|
+| `release.yml` | `v*` minus `v*-*` (e.g. `v1.1.0`) | `false` | `stable` — cyan |
+| `release-rc.yml` | `v*-rc*` (e.g. `v1.1.0-rc.1`) | `true` | `rc` — amber |
+
+RC builds publish as GitHub pre-releases. `electron-updater`'s `allowPrerelease` is left at its default (`false`) in `main.js`, so stable users are never offered an RC update.
+
+### Cutting a release candidate
+
+Work on a short-lived branch (e.g. `release/1.1`) so `main` stays deployable. Don't merge to `main` until the RC is validated.
+
+```bash
+# on release/1.1 — edit package.json: "version": "1.1.0-rc.1"
+git commit -m "Bump version to 1.1.0-rc.1"
+git push origin release/1.1
+git tag v1.1.0-rc.1
+git push origin v1.1.0-rc.1
+```
+
+Iterate (`1.1.0-rc.2`, `rc.3`, …) on the same branch until it's stable.
+
+### Promoting to stable
+
+```bash
+git checkout main
+git merge release/1.1
+# edit package.json: "version": "1.1.0"   (drop the -rc suffix)
+git commit -m "Bump version to 1.1.0"
+git push origin main
+git tag v1.1.0
+git push origin v1.1.0
+```
+
+The tag with no suffix is what `release.yml` matches — this is the one that becomes "Latest Release."
+
+### Icon channel
+
+`scripts/gen-icon.js --channel=rc` swaps the bar gradient from cyan (`#20eaff → #0080aa`) to amber (`#ffb020 → #aa5500`) — same shape, different accent color, so an RC build is visually distinct in the dock/taskbar. The reusable workflow passes `--channel=rc` automatically when `prerelease: true`; no manual step needed. Run without the flag (or omit it) for the stable cyan icon.
+
 ## Open Questions (Defer Until Specified Phase)
 | ID | Question | Deferred To |
 |---|---|---|
