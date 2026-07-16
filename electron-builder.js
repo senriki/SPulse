@@ -1,10 +1,6 @@
-const pkg = require('./package.json')
-
-const isPrerelease = pkg.version.includes('-')
-
 module.exports = {
-  appId: isPrerelease ? 'com.senriki.spulse.rc' : 'com.senriki.spulse',
-  productName: isPrerelease ? 'SPulse RC' : 'SPulse',
+  appId: 'com.senriki.spulse',
+  productName: 'SPulse',
   asar: true,
   asarUnpack: [
     'node_modules/ffmpeg-static/**'
