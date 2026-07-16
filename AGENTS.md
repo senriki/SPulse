@@ -115,6 +115,26 @@ All visualizer configuration lives in `src/visualizer/visualizerState.js` as a s
 - **No silent failures** — all export errors must surface to the user with actionable messaging.
 - **Keyboard accessible** — all primary actions must be reachable via keyboard shortcuts (see PRD §5.3).
 
+## Commit Message Convention
+
+All commits to this repo must follow the keyword convention below.
+The GitHub Actions release workflow and the `/changelog` skill both parse these prefixes to auto-generate release notes.
+
+| Prefix | When to use | Category in release notes |
+|---|---|---|
+| `Add …` | New feature, new control, new mode | Features |
+| `Fix …` | Bug fix, crash, incorrect behaviour | Bug Fixes |
+| `Update …` | Change to existing feature | Improvements |
+| `Improve …` | Performance or UX refinement | Improvements |
+| `Refactor …` | Internal rewrite, no behaviour change | Improvements |
+| `Bump version to X.Y.Z` | Version bump only | *(skipped in notes)* |
+| `Docs …` | README, AGENTS.md, comments only | *(skipped in notes)* |
+
+Rules:
+- Subject line ≤ 72 characters, imperative mood, no trailing period.
+- One logical change per commit. Version bumps are their own commit.
+- Do not mix feature + fix in a single commit.
+
 ## Open Questions (Defer Until Specified Phase)
 | ID | Question | Deferred To |
 |---|---|---|

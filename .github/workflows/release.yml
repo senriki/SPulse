@@ -16,6 +16,52 @@ jobs:
       release_id: ${{ steps.create.outputs.id }}
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0   # needed to access full tag history
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          CURR=$(git describe --tags --exact-match HEAD)
+          PREV=$(git tag --sort=-v:refname | grep -v "^${CURR}$" | head -1)
+          RANGE="${PREV:+${PREV}..}HEAD"
+
+          python3 - <<'PYEOF'
+          import subprocess, os, re
+          from datetime import date
+
+          curr = subprocess.getoutput("git describe --tags --exact-match HEAD 2>/dev/null").strip()
+          prev = subprocess.getoutput(
+              f"git tag --sort=-v:refname | grep -v '^{curr}$' | head -1"
+          ).strip()
+          range_arg = f"{prev}..HEAD" if prev else "HEAD"
+          raw = subprocess.getoutput(f"git log --pretty=format:%s {range_arg}").splitlines()
+
+          cats = {"Features": [], "Bug Fixes": [], "Improvements": [], "Other Changes": []}
+          skip = re.compile(r"^(bump version|docs)", re.I)
+          feat = re.compile(r"^add ", re.I)
+          fix  = re.compile(r"^fix ", re.I)
+          impr = re.compile(r"^(update|improve|refactor) ", re.I)
+
+          for line in raw:
+              if not line.strip() or skip.match(line): continue
+              if feat.match(line):   cats["Features"].append(line)
+              elif fix.match(line):  cats["Bug Fixes"].append(line)
+              elif impr.match(line): cats["Improvements"].append(line)
+              else:                  cats["Other Changes"].append(line)
+
+          today = date.today().isoformat()
+          sections = [f"## {curr} — {today}\n"]
+          for title, items in cats.items():
+              if items:
+                  sections.append(f"### {title}")
+                  sections.extend(f"- {i}" for i in items)
+                  sections.append("")
+
+          body = "\n".join(sections)
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"body<<BODYEOF\n{body}\nBODYEOF\n")
+          PYEOF
 
       - name: Create release
         id: create
@@ -23,7 +69,7 @@ jobs:
         with:
           draft: false
           prerelease: false
-          generate_release_notes: true
+          body: ${{ steps.changelog.outputs.body }}
 
   # Step 2: build on each OS and upload artifacts to the release
   build:
