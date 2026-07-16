@@ -49,6 +49,10 @@ const btnOpenAudio  = document.getElementById('btn-open-audio')
 const btnExport     = document.getElementById('btn-export')
 const exportHint    = document.getElementById('export-hint')
 const audioInfoEmpty = document.getElementById('audio-info-empty')
+const btnFullscreen = document.getElementById('btn-fullscreen')
+const toggleLeftPanel  = document.getElementById('toggle-left-panel')
+const toggleRightPanel = document.getElementById('toggle-right-panel')
+const appLayout     = document.querySelector('.app-layout')
 const audioMeta     = document.getElementById('audio-meta')
 const metaTitle     = document.getElementById('meta-title')
 const metaArtist    = document.getElementById('meta-artist')
@@ -290,6 +294,7 @@ document.addEventListener('keydown', e => {
   if (ctrl && e.key === 'z') { e.preventDefault(); _undo() }
   if (ctrl && e.key === 'y') { e.preventDefault(); _redo() }
   if (ctrl && e.key === 'q') { e.preventDefault(); window.api.quit() }
+  if (e.key === 'F11') { e.preventDefault(); _toggleFullscreen() }
 
   if (e.key === ' ' && !e.target.matches('input, textarea, select')) {
     e.preventDefault()
@@ -302,6 +307,46 @@ document.addEventListener('keydown', e => {
 })
 
 btnPlay.addEventListener('click', _togglePlayback)
+
+// ─── Fullscreen ──────────────────────────────────────────────────────────────
+function _toggleFullscreen() {
+  if (document.fullscreenElement) document.exitFullscreen()
+  else document.documentElement.requestFullscreen()
+}
+
+document.addEventListener('fullscreenchange', () => {
+  const isFs = !!document.fullscreenElement
+  btnFullscreen?.querySelector('.icon-fs-enter')?.classList.toggle('hidden', isFs)
+  btnFullscreen?.querySelector('.icon-fs-exit')?.classList.toggle('hidden', !isFs)
+  btnFullscreen?.setAttribute('title', isFs ? 'Exit Fullscreen (F11)' : 'Toggle Fullscreen (F11)')
+})
+
+btnFullscreen?.addEventListener('click', _toggleFullscreen)
+
+// ─── Collapsible side panels ──────────────────────────────────────────────────
+let _leftPanelCollapsed  = false
+let _rightPanelCollapsed = false
+
+function _applyPanelWidths() {
+  const l = _leftPanelCollapsed  ? '0px' : 'var(--panel-left-width)'
+  const r = _rightPanelCollapsed ? '0px' : 'var(--panel-right-width)'
+  if (appLayout) appLayout.style.gridTemplateColumns = `${l} 1fr ${r}`
+  canvasEngine.refitPreview()
+}
+
+toggleLeftPanel?.addEventListener('click', () => {
+  _leftPanelCollapsed = !_leftPanelCollapsed
+  _applyPanelWidths()
+  toggleLeftPanel.classList.toggle('collapsed', _leftPanelCollapsed)
+  toggleLeftPanel.title = _leftPanelCollapsed ? 'Expand panel' : 'Collapse panel'
+})
+
+toggleRightPanel?.addEventListener('click', () => {
+  _rightPanelCollapsed = !_rightPanelCollapsed
+  _applyPanelWidths()
+  toggleRightPanel.classList.toggle('collapsed', _rightPanelCollapsed)
+  toggleRightPanel.title = _rightPanelCollapsed ? 'Expand panel' : 'Collapse panel'
+})
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function _isAudioFile(name) {
@@ -465,7 +510,8 @@ function _syncDomFromState(vs, es) {
     }
   }
   set('overlay-title', ov.title); set('overlay-artist', ov.artist)
-  set('overlay-font', ov.font); set('overlay-position', ov.position)
+  set('overlay-font-title', ov.titleFont); set('overlay-font-artist', ov.artistFont)
+  set('overlay-position', ov.position)
   $('overlay-xy-group')?.classList.toggle('hidden', ov.position !== 'custom')
   set('overlay-x', ov.x); set('overlay-y', ov.y)
   set('overlay-color', ov.color)
@@ -475,7 +521,7 @@ function _syncDomFromState(vs, es) {
 
   // Export settings
   const presetKey = `${es.width}x${es.height}`
-  const knownPresets = new Set(['1920x1080', '3840x2160', '1080x1920', '1080x1080'])
+  const knownPresets = new Set(['1920x1080', '3840x2160', '1080x1920', '1440x2560', '1080x1080'])
   const presetEl = $('resolution-preset')
   if (presetEl) {
     presetEl.value = knownPresets.has(presetKey) ? presetKey : 'custom'

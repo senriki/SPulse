@@ -29,9 +29,13 @@ export function initOverlayControls(overlayState) {
     overlayState.artist = e.target.value
   })
 
-  // ── Font picker ───────────────────────────────────────────────────────────────
-  $('overlay-font')?.addEventListener('change', e => {
-    overlayState.font = e.target.value
+  // ── Font pickers ──────────────────────────────────────────────────────────────
+  $('overlay-font-title')?.addEventListener('change', e => {
+    overlayState.titleFont = e.target.value
+  })
+
+  $('overlay-font-artist')?.addEventListener('change', e => {
+    overlayState.artistFont = e.target.value
   })
 
   // ── Position selector ─────────────────────────────────────────────────────────

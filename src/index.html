@@ -228,6 +228,12 @@
          CENTER PANEL — Canvas + Transport
          ═══════════════════════════════════════ -->
     <main class="center-panel" id="center-panel">
+      <button class="panel-toggle panel-toggle-left" id="toggle-left-panel" title="Collapse panel">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3L5 8l5 5"/></svg>
+      </button>
+      <button class="panel-toggle panel-toggle-right" id="toggle-right-panel" title="Collapse panel">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3l5 5-5 5"/></svg>
+      </button>
       <div class="canvas-area" id="canvas-area">
         <div class="canvas-drop-zone" id="canvas-drop-zone">
           <div class="canvas-wrapper" id="canvas-wrapper">
@@ -260,6 +266,14 @@
           <div class="scrubber-thumb" id="scrubber-thumb"></div>
         </div>
         <span class="time-label" id="time-total">0:00</span>
+        <button class="btn-icon-sm" id="btn-fullscreen" title="Toggle Fullscreen (F11)">
+          <svg class="icon-fs-enter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/>
+          </svg>
+          <svg class="icon-fs-exit hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 3v3a2 2 0 0 1-2 2H4M15 3v3a2 2 0 0 0 2 2h3M9 21v-3a2 2 0 0 0-2-2H4M15 21v-3a2 2 0 0 1 2-2h3"/>
+          </svg>
+        </button>
       </div>
     </main>
 
@@ -301,8 +315,19 @@
               <input type="text" id="overlay-artist" class="text-input" placeholder="Artist name…" disabled>
             </div>
             <div class="control-group">
-              <label class="control-label">Font</label>
-              <select id="overlay-font" class="select-input" disabled>
+              <label class="control-label">Title Font</label>
+              <select id="overlay-font-title" class="select-input" disabled>
+                <option value="Inter, system-ui, sans-serif">Inter (bundled)</option>
+                <option value="'JetBrains Mono', monospace">JetBrains Mono (bundled)</option>
+                <option value="system-ui, -apple-system, sans-serif">System Default</option>
+                <option value="Arial, sans-serif">Arial</option>
+                <option value="Georgia, serif">Georgia</option>
+                <option value="'Courier New', monospace">Courier New</option>
+              </select>
+            </div>
+            <div class="control-group">
+              <label class="control-label">Artist Font</label>
+              <select id="overlay-font-artist" class="select-input" disabled>
                 <option value="Inter, system-ui, sans-serif">Inter (bundled)</option>
                 <option value="'JetBrains Mono', monospace">JetBrains Mono (bundled)</option>
                 <option value="system-ui, -apple-system, sans-serif">System Default</option>
@@ -350,6 +375,7 @@
               <option value="1920x1080" selected>Full HD — 1920×1080</option>
               <option value="3840x2160">4K UHD — 3840×2160</option>
               <option value="1080x1920">Shorts/Reels — 1080×1920</option>
+              <option value="1440x2560">Shorts/Reels HQ — 1440×2560</option>
               <option value="1080x1080">Square — 1080×1080</option>
               <option value="custom">Custom…</option>
             </select>

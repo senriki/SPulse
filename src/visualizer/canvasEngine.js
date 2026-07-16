@@ -50,6 +50,12 @@ class CanvasEngine {
     this._fitWrapper()
   }
 
+  // Re-fit the preview wrapper to the current canvas-area size — call after
+  // any layout change that isn't a window resize (e.g. side panel collapse/expand)
+  refitPreview() {
+    this._fitWrapper()
+  }
+
   // ─── Lifecycle ─────────────────────────────────────────────────────────────
 
   start() {

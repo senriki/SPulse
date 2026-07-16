@@ -5,7 +5,7 @@ const MARGIN = 40  // px from canvas edges
 
 export const textOverlay = {
   draw(ctx, W, H, overlayState) {
-    const { title, artist, font, size, color, opacity, position, x, y } = overlayState
+    const { title, artist, titleFont, artistFont, size, color, opacity, position, x, y } = overlayState
     if (!title && !artist) return
 
     const artistSize = Math.round(size * 0.62)
@@ -67,14 +67,14 @@ export const textOverlay = {
     if (title) {
       ctx.globalAlpha = opacity
       ctx.fillStyle   = color
-      ctx.font        = `600 ${size}px ${font}`
+      ctx.font        = `600 ${size}px ${titleFont}`
       ctx.fillText(title, tx, tyTitle)
     }
 
     if (artist) {
       ctx.globalAlpha = opacity * 0.78
       ctx.fillStyle   = color
-      ctx.font        = `400 ${artistSize}px ${font}`
+      ctx.font        = `400 ${artistSize}px ${artistFont}`
       ctx.fillText(artist, tx, tyArtist)
     }
 
