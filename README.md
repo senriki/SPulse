@@ -4,8 +4,6 @@
 [![License](https://img.shields.io/github/license/senriki/SPulse?style=flat-square)](./LICENSE)
 [![Downloads](https://img.shields.io/github/downloads/senriki/SPulse/total?style=flat-square&logo=github)](https://github.com/senriki/SPulse/releases)
 [![CI](https://img.shields.io/github/actions/workflow/status/senriki/SPulse/ci.yml?branch=main&label=CI&style=flat-square&logo=githubactions)](https://github.com/senriki/SPulse/actions/workflows/ci.yml)
-[![X](https://img.shields.io/badge/X-%40SenrikiSorani-black?logo=x&style=flat-square)](https://x.com/SenrikiSorani)
-[![Website](https://img.shields.io/badge/website-singularitypulse.com-blueviolet?style=flat-square)](https://singularitypulse.com/)
 
 Desktop app for creating MP4 waveform visualizer videos from audio files. Runs fully offline.
 
@@ -120,3 +118,10 @@ Want to help? See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for dev setup, code sty
 MIT — see individual dependency licenses for FFmpeg (LGPL v2.1+), Inter (SIL OFL 1.1), and JetBrains Mono (Apache 2.0).
 
 The app's Help > About screen lists all open-source component licenses as required by the FFmpeg LGPL.
+
+---
+
+## Connect
+
+[![X](https://img.shields.io/badge/X-%40SenrikiSorani-black?logo=x&style=flat-square)](https://x.com/SenrikiSorani)
+[![Website](https://img.shields.io/badge/website-singularitypulse.com-blueviolet?style=flat-square)](https://singularitypulse.com/)
