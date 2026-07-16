@@ -138,3 +138,4 @@ The app's Help > About screen lists all open-source component licenses as requir
 
 [![X](https://img.shields.io/badge/X-%40SenrikiSorani-black?logo=x&style=flat-square)](https://x.com/SenrikiSorani)
 [![Website](https://img.shields.io/badge/website-singularitypulse.com-blueviolet?style=flat-square)](https://singularitypulse.com/)
+[![Patreon](https://img.shields.io/badge/Patreon-support-f96854?logo=patreon&logoColor=white&style=flat-square)](https://www.patreon.com/cw/SenrikiSorani)
