@@ -133,6 +133,13 @@ function _togglePlayback() {
   }
 }
 
+function _pauseForExport() {
+  if (!appState.analyser?.isPlaying) return
+  appState.analyser.pause()
+  canvasEngine.stop()
+  _syncPlayIcon(false)
+}
+
 function _onPlaybackEnded() {
   canvasEngine.stop()
   _syncPlayIcon(false)
@@ -272,7 +279,7 @@ document.addEventListener('keydown', e => {
 
   if (ctrl && e.key === 'o') { e.preventDefault(); _openFilePicker() }
   if (ctrl && e.key === 's') { e.preventDefault(); _saveProject() }
-  if (ctrl && e.key === 'e') { e.preventDefault(); if (appState.loaded) startExport() }
+  if (ctrl && e.key === 'e') { e.preventDefault(); if (appState.loaded) { _pauseForExport(); startExport() } }
   if (ctrl && e.key === 'z') { e.preventDefault(); _undo() }
   if (ctrl && e.key === 'y') { e.preventDefault(); _redo() }
   if (ctrl && e.key === 'q') { e.preventDefault(); window.api.quit() }
@@ -556,7 +563,7 @@ backgroundRenderer.initFilePickers(visualizerState.background)
 initOverlayControls(visualizerState.overlay)
 
 // ─── Wire export button ───────────────────────────────────────────────────────
-document.getElementById('btn-export')?.addEventListener('click', startExport)
+document.getElementById('btn-export')?.addEventListener('click', () => { _pauseForExport(); startExport() })
 
 // ─── Wire right-panel export settings controls ────────────────────────────────
 function _initExportControls() {

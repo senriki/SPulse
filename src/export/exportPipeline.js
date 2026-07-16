@@ -71,7 +71,9 @@ export async function startExport() {
   _exporting  = true
   _cancelled  = false
   const btnExport = document.getElementById('btn-export')
+  const btnPlay   = document.getElementById('btn-play-pause')
   if (btnExport) btnExport.disabled = true
+  if (btnPlay)   btnPlay.disabled   = true
   const { w, h, fps, codec, encoder, audioMode, bitrate, outFilename, outputPath: pickedPath } = readExportSettings()
   const { audioLoader, filePath } = appState
   const duration    = audioLoader.duration
@@ -87,6 +89,7 @@ export async function startExport() {
     if (!picked) {
       _exporting = false
       if (btnExport) btnExport.disabled = false
+      if (btnPlay)   btnPlay.disabled   = false
       return
     }
     outputPath = picked
@@ -158,5 +161,6 @@ export async function startExport() {
     canvasEngine.restorePreviewResolution()
     _exporting = false
     if (btnExport) btnExport.disabled = false
+    if (btnPlay)   btnPlay.disabled   = false
   }
 }
