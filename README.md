@@ -5,6 +5,7 @@
 [![Downloads](https://img.shields.io/github/downloads/senriki/SPulse/total)](https://github.com/senriki/SPulse/releases)
 [![CI](https://img.shields.io/github/actions/workflow/status/senriki/SPulse/ci.yml?branch=main&label=CI)](https://github.com/senriki/SPulse/actions/workflows/ci.yml)
 [![X](https://img.shields.io/badge/X-%40SenrikiSorani-black?logo=x)](https://x.com/SenrikiSorani)
+[![Website](https://img.shields.io/badge/website-singularitypulse.com-blueviolet)](https://singularitypulse.com/)
 
 Desktop app for creating MP4 waveform visualizer videos from audio files. Runs fully offline.
 
