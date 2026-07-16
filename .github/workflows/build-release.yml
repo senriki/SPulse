@@ -85,11 +85,11 @@ jobs:
       matrix:
         include:
           - os: windows-latest
-            args: --win
+            script: build:win
           - os: macos-latest
-            args: --mac
+            script: build:mac
           - os: ubuntu-latest
-            args: --linux
+            script: build:linux
 
     steps:
       - uses: actions/checkout@v5
@@ -109,7 +109,7 @@ jobs:
       - name: Build & upload to GitHub Releases
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx electron-builder ${{ matrix.args }} --publish always
+        run: npm run ${{ matrix.script }} -- --publish always
 
       # Stable releases only — uploads a copy of each installer under a fixed,
       # version-less filename so README "Download" links via
