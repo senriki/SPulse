@@ -93,6 +93,7 @@ export function initLeftPanel(appState, visualizerState) {
     image:    $('bg-image-controls'),
     video:    $('bg-video-controls'),
   }
+  const bgPositionSection = $('bg-position-section')
 
   $$('[name="bg-type"]').forEach(radio => {
     radio.addEventListener('change', e => {
@@ -102,8 +103,20 @@ export function initLeftPanel(appState, visualizerState) {
       Object.entries(bgSections).forEach(([key, el]) => {
         if (el) el.classList.toggle('hidden', key !== type)
       })
+      bgPositionSection?.classList.toggle('hidden', type !== 'image' && type !== 'video')
     })
   })
+
+  // ─── Background Fit Mode + Zoom ───────────────────────────────────────────
+  $('bg-fit-mode')?.addEventListener('change', e => {
+    visualizerState.background.fitMode = e.target.value
+  })
+
+  setupSlider(
+    $('bg-scale'), $('bg-scale-val'),
+    v => `${Math.round(v)}%`,
+    v => { visualizerState.background.scale = v / 100 }
+  )
 
   // ─── Solid Background Color ───────────────────────────────────────────────
   setupColorPicker(

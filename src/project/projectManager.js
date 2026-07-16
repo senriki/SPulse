@@ -34,6 +34,10 @@ export function serializeState(audioFilePath) {
         imageDarken:   bg.imageDarken,
         imagePath:     bg.imagePath || null,
         videoPath:     bg.videoPath || null,
+        fitMode:       bg.fitMode,
+        scale:         bg.scale,
+        offsetX:       bg.offsetX,
+        offsetY:       bg.offsetY,
       },
       overlay: {
         enabled:    ov.enabled,
@@ -77,7 +81,8 @@ export function deserializeState(data) {
   })
 
   // Background (imageEl/videoEl are null — reloaded by backgroundRenderer.reloadFromState)
-  ;['type','color','gradientA','gradientB','gradientAngle','imageBlur','imageDarken'].forEach(k => {
+  ;['type','color','gradientA','gradientB','gradientAngle','imageBlur','imageDarken',
+    'fitMode','scale','offsetX','offsetY'].forEach(k => {
     if (bg[k] !== undefined) visualizerState.background[k] = bg[k]
   })
   visualizerState.background.imagePath = bg.imagePath || null

@@ -38,6 +38,12 @@ export const visualizerState = {
     videoPath:     null,
     imageEl:       null,   // HTMLImageElement — set by backgroundRenderer
     videoEl:       null,   // HTMLVideoElement — set by backgroundRenderer
+
+    // Fit / position — applies to image and video backgrounds
+    fitMode:  'cover',   // 'cover' | 'contain' | 'blur-fill'
+    scale:    1,         // user zoom multiplier on top of the fit-mode base scale
+    offsetX:  0,         // px pan offset (logical canvas px), drag-to-reposition
+    offsetY:  0,
   },
 
   // Text overlay — task-8 populates and renders this

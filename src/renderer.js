@@ -203,8 +203,47 @@ window.addEventListener('audio-loaded', () => {
   canvasWrapper?.classList.add('viz-draggable')
 })
 
+// ─── Background drag-to-reposition (only while "Adjust position" is on) ──────
+let _bgEditMode      = false
+let _bgDragging      = false
+let _bgDragStartX    = 0
+let _bgDragStartY    = 0
+let _bgDragStartOffX = 0
+let _bgDragStartOffY = 0
+
+document.getElementById('bg-position-edit')?.addEventListener('change', e => {
+  _bgEditMode = e.target.checked
+  canvasWrapper?.classList.toggle('bg-draggable', _bgEditMode)
+})
+
+document.getElementById('btn-bg-reset-position')?.addEventListener('click', () => {
+  historyManager.push(_snapshotVS())
+  visualizerState.background.scale   = 1
+  visualizerState.background.offsetX = 0
+  visualizerState.background.offsetY = 0
+  const scaleSlider = document.getElementById('bg-scale')
+  const scaleVal    = document.getElementById('bg-scale-val')
+  if (scaleSlider) scaleSlider.value = '100'
+  if (scaleVal)    scaleVal.textContent = '100%'
+  if (!appState.analyser?.isPlaying) canvasEngine.stop()
+  _setDirty()
+})
+
 canvasWrapper?.addEventListener('mousedown', e => {
   if (e.button !== 0 || !appState.loaded) return
+
+  if (_bgEditMode) {
+    _bgDragging      = true
+    _bgDragStartX    = e.clientX
+    _bgDragStartY    = e.clientY
+    _bgDragStartOffX = visualizerState.background.offsetX ?? 0
+    _bgDragStartOffY = visualizerState.background.offsetY ?? 0
+    canvasWrapper.classList.add('bg-dragging')
+    historyManager.push(_snapshotVS())
+    e.preventDefault()
+    return
+  }
+
   _vizDragging     = true
   _vizDragStartY   = e.clientY
   _vizDragStartOff = visualizerState.yOffset
@@ -214,6 +253,23 @@ canvasWrapper?.addEventListener('mousedown', e => {
 })
 
 document.addEventListener('mousemove', e => {
+  if (_bgDragging) {
+    const cssW  = canvasWrapper.clientWidth
+    const cssH  = canvasWrapper.clientHeight
+    const logW  = canvasEngine.r2d?.canvas.width  ?? 1280
+    const logH  = canvasEngine.r2d?.canvas.height ?? 720
+    const scaleX = cssW > 0 ? logW / cssW : 1
+    const scaleY = cssH > 0 ? logH / cssH : 1
+    const dx = Math.round((e.clientX - _bgDragStartX) * scaleX)
+    const dy = Math.round((e.clientY - _bgDragStartY) * scaleY)
+
+    visualizerState.background.offsetX = _bgDragStartOffX + dx
+    visualizerState.background.offsetY = _bgDragStartOffY + dy
+
+    if (!appState.analyser?.isPlaying) canvasEngine.stop()
+    return
+  }
+
   if (!_vizDragging) return
   const cssH  = canvasWrapper.clientHeight
   const logH  = canvasEngine.r2d?.canvas.height ?? 720
@@ -237,6 +293,13 @@ document.addEventListener('mousemove', e => {
 }, { passive: true })
 
 document.addEventListener('mouseup', () => {
+  if (_bgDragging) {
+    _bgDragging = false
+    canvasWrapper?.classList.remove('bg-dragging')
+    _setDirty()
+    return
+  }
+
   if (!_vizDragging) return
   _vizDragging = false
   canvasWrapper?.classList.remove('viz-dragging')
@@ -324,6 +387,8 @@ document.addEventListener('fullscreenchange', () => {
 btnFullscreen?.addEventListener('click', _toggleFullscreen)
 
 // ─── Collapsible side panels ──────────────────────────────────────────────────
+const leftPanelEl  = document.getElementById('left-panel')
+const rightPanelEl = document.getElementById('right-panel')
 let _leftPanelCollapsed  = false
 let _rightPanelCollapsed = false
 
@@ -331,12 +396,18 @@ function _applyPanelWidths() {
   const l = _leftPanelCollapsed  ? '0px' : 'var(--panel-left-width)'
   const r = _rightPanelCollapsed ? '0px' : 'var(--panel-right-width)'
   if (appLayout) appLayout.style.gridTemplateColumns = `${l} 1fr ${r}`
-  canvasEngine.refitPreview()
 }
+
+// Wait for the collapse transition to finish before re-measuring canvas-area —
+// clientWidth still reports the pre-transition size if read synchronously.
+appLayout?.addEventListener('transitionend', e => {
+  if (e.propertyName === 'grid-template-columns') canvasEngine.refitPreview()
+})
 
 toggleLeftPanel?.addEventListener('click', () => {
   _leftPanelCollapsed = !_leftPanelCollapsed
   _applyPanelWidths()
+  leftPanelEl?.classList.toggle('collapsed', _leftPanelCollapsed)
   toggleLeftPanel.classList.toggle('collapsed', _leftPanelCollapsed)
   toggleLeftPanel.title = _leftPanelCollapsed ? 'Expand panel' : 'Collapse panel'
 })
@@ -344,6 +415,7 @@ toggleLeftPanel?.addEventListener('click', () => {
 toggleRightPanel?.addEventListener('click', () => {
   _rightPanelCollapsed = !_rightPanelCollapsed
   _applyPanelWidths()
+  rightPanelEl?.classList.toggle('collapsed', _rightPanelCollapsed)
   toggleRightPanel.classList.toggle('collapsed', _rightPanelCollapsed)
   toggleRightPanel.title = _rightPanelCollapsed ? 'Expand panel' : 'Collapse panel'
 })
@@ -495,6 +567,12 @@ function _syncDomFromState(vs, es) {
   set('bg-image-darken', bg.imageDarken); txt('bg-darken-val', `${bg.imageDarken}%`)
   if ($('bg-image-name')) $('bg-image-name').textContent = bg.imagePath ? bg.imagePath.replace(/.*[\\/]/, '') : 'No file'
   if ($('bg-video-name')) $('bg-video-name').textContent = bg.videoPath ? bg.videoPath.replace(/.*[\\/]/, '') : 'No file'
+
+  // Background fit/position
+  set('bg-fit-mode', bg.fitMode ?? 'cover')
+  const bgScalePct = Math.round((bg.scale ?? 1) * 100)
+  set('bg-scale', bgScalePct); txt('bg-scale-val', `${bgScalePct}%`)
+  $('bg-position-section')?.classList.toggle('hidden', bg.type !== 'image' && bg.type !== 'video')
 
   // Overlay
   const ov = vs.overlay

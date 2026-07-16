@@ -152,6 +152,32 @@
           </div>
         </section>
 
+        <!-- Background Position & Fit (image/video only) -->
+        <section class="panel-section hidden" id="bg-position-section">
+          <h3 class="section-label">Background Position &amp; Fit</h3>
+          <div class="control-group">
+            <label class="control-label">Fit Mode</label>
+            <select id="bg-fit-mode" class="select-input">
+              <option value="cover">Cover (Fill &amp; Crop)</option>
+              <option value="contain">Contain (Fit, Letterboxed)</option>
+              <option value="blur-fill">Blur Fill (Fit + Blurred Backdrop)</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <label class="control-label">Zoom <span class="value-display" id="bg-scale-val">100%</span></label>
+            <input type="range" id="bg-scale" class="range-input" min="50" max="200" value="100">
+          </div>
+          <div class="control-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="bg-position-edit">
+              Adjust position (drag on canvas)
+            </label>
+          </div>
+          <div class="control-group">
+            <button class="btn btn-secondary btn-sm w-full" id="btn-bg-reset-position">Reset Position</button>
+          </div>
+        </section>
+
         <!-- Color Controls -->
         <section class="panel-section">
           <h3 class="section-label">Waveform Color</h3>

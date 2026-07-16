@@ -25,6 +25,10 @@ function _snapshot(vs) {
       imageDarken:   vs.background.imageDarken,
       imagePath:     vs.background.imagePath,
       videoPath:     vs.background.videoPath,
+      fitMode:       vs.background.fitMode,
+      scale:         vs.background.scale,
+      offsetX:       vs.background.offsetX,
+      offsetY:       vs.background.offsetY,
     },
     overlay: { ...vs.overlay },
   }

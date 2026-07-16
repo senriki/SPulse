@@ -76,6 +76,7 @@ html, body {
   flex: 1;
   min-height: 0;
   overflow: hidden;
+  transition: grid-template-columns var(--transition-med);
 }
 
 /* ─── Panel Base ─────────────────────────────────────────────────────────── */
@@ -84,7 +85,10 @@ html, body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  transition: opacity var(--transition-med);
 }
+
+.panel.collapsed { opacity: 0; }
 
 .panel-header {
   display: flex;
@@ -277,6 +281,15 @@ html, body {
 
 .canvas-wrapper.viz-draggable         { cursor: grab; }
 .canvas-wrapper.viz-draggable.viz-dragging { cursor: grabbing; }
+
+/* Background position edit mode — takes precedence over the visualizer drag
+   cursor above since both classes can be present at once (rule order wins). */
+.canvas-wrapper.bg-draggable {
+  cursor: move;
+  outline: 1px dashed var(--color-accent);
+  outline-offset: 2px;
+}
+.canvas-wrapper.bg-draggable.bg-dragging { cursor: grabbing; }
 
 /* Drop overlay — shown when no audio is loaded */
 .drop-overlay {

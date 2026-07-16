@@ -61,7 +61,7 @@ class BackgroundRenderer {
         else                  drawSolidColor(ctx, W, H, bgState)
         break
       case 'video':
-        if (this._videoBg.loaded) this._videoBg.draw(ctx, W, H)
+        if (this._videoBg.loaded) this._videoBg.draw(ctx, W, H, bgState)
         else                      drawSolidColor(ctx, W, H, bgState)
         break
       default: // 'solid' and fallback
