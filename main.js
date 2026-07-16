@@ -14,7 +14,7 @@ function _initAutoUpdater() {
   // Only runs in packaged app — skip silently in dev mode
   if (!app.isPackaged) return
 
-  autoUpdater.autoDownload    = true
+  autoUpdater.autoDownload    = false
   autoUpdater.autoInstallOnAppQuit = true
 
   autoUpdater.on('update-available', info => {
@@ -118,6 +118,9 @@ ipcMain.handle('check-for-updates', () => {
 })
 ipcMain.handle('install-update', () => {
   autoUpdater.quitAndInstall()
+})
+ipcMain.handle('download-update', () => {
+  autoUpdater.downloadUpdate().catch(() => {})
 })
 
 // ─── GPU encoder detection ────────────────────────────────────────────────────

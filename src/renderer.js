@@ -859,16 +859,39 @@ window.api.detectGpuEncoders?.().then(info => {
   const msgEl       = document.getElementById('update-msg')
   const progressWrap= document.getElementById('update-progress-wrap')
   const progressFill= document.getElementById('update-progress-fill')
+  const btnUpdateNow= document.getElementById('btn-update-now')
   const btnInstall  = document.getElementById('btn-update-install')
   const btnDismiss  = document.getElementById('btn-update-dismiss')
   if (!bar) return
+
+  const DISMISSED_KEY = 'spulse-dismissed-update-version'
+  // Set while a banner is showing an available-but-not-yet-downloading update —
+  // dismissing in that state remembers the version so it doesn't nag again.
+  let _pendingVersion = null
+  // A manual "Check for Updates…" click always shows the result, even for a
+  // version the user previously dismissed on auto-check.
+  let _manualCheck = false
 
   function _show(msg) {
     msgEl.textContent = msg
     bar.classList.remove('hidden')
   }
 
-  btnDismiss.addEventListener('click', () => bar.classList.add('hidden'))
+  btnDismiss.addEventListener('click', () => {
+    if (_pendingVersion) {
+      localStorage.setItem(DISMISSED_KEY, _pendingVersion)
+      _pendingVersion = null
+    }
+    bar.classList.add('hidden')
+  })
+
+  btnUpdateNow.addEventListener('click', () => {
+    _pendingVersion = null
+    btnUpdateNow.classList.add('hidden')
+    progressWrap.classList.remove('hidden')
+    msgEl.textContent = 'Mengunduh update… 0%'
+    window.api.downloadUpdate?.()
+  })
 
   btnInstall.addEventListener('click', () => window.api.installUpdate?.())
 
@@ -879,7 +902,9 @@ window.api.detectGpuEncoders?.().then(info => {
   }
 
   window.api.onUpdateNotAvailable?.(() => {
+    _manualCheck = false
     progressWrap.classList.add('hidden')
+    btnUpdateNow.classList.add('hidden')
     btnInstall.classList.add('hidden')
     _show('Sudah versi terbaru')
     _autoDismiss(3000)
@@ -887,9 +912,14 @@ window.api.detectGpuEncoders?.().then(info => {
 
   window.api.onUpdateAvailable?.(({ version }) => {
     clearTimeout(_dismissTimer)
-    _show(`Versi ${version} tersedia — sedang mengunduh…`)
-    progressWrap.classList.remove('hidden')
+    if (!_manualCheck && localStorage.getItem(DISMISSED_KEY) === version) return
+    _manualCheck = false
+
+    _pendingVersion = version
+    _show(`Versi ${version} tersedia`)
+    progressWrap.classList.add('hidden')
     btnInstall.classList.add('hidden')
+    btnUpdateNow.classList.remove('hidden')
   })
 
   window.api.onUpdateProgress?.(({ percent }) => {
@@ -899,14 +929,18 @@ window.api.detectGpuEncoders?.().then(info => {
 
   window.api.onUpdateDownloaded?.(({ version }) => {
     progressWrap.classList.add('hidden')
+    btnUpdateNow.classList.add('hidden')
     btnInstall.classList.remove('hidden')
     _show(`Update ${version} siap diinstall`)
   })
 
   window.api.onMenuCheckUpdates?.(() => {
+    _pendingVersion = null
+    _manualCheck = true
     _show('Memeriksa update…')
     bar.classList.remove('hidden')
     progressWrap.classList.add('hidden')
+    btnUpdateNow.classList.add('hidden')
     btnInstall.classList.add('hidden')
     window.api.checkForUpdates?.()
   })

@@ -70,4 +70,5 @@ contextBridge.exposeInMainWorld('api', {
   getAppVersion:     ()   => ipcRenderer.invoke('get-app-version'),
   checkForUpdates:   ()   => ipcRenderer.invoke('check-for-updates'),
   installUpdate:     ()   => ipcRenderer.invoke('install-update'),
+  downloadUpdate:    ()   => ipcRenderer.invoke('download-update'),
 })
