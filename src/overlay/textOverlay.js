@@ -1,12 +1,21 @@
 // Text overlay singleton — drawn as the top-most layer each canvas frame.
 // Set as window.textOverlay so canvasEngine can call it without a circular import.
+import { exportSettings } from '../export/exportSettings.js'
 
-const MARGIN = 40  // px from canvas edges
+const MARGIN = 40  // px from the target resolution's edges
 
 export const textOverlay = {
   draw(ctx, W, H, overlayState) {
     const { title, artist, titleFont, artistFont, size, color, opacity, position, x, y } = overlayState
     if (!title && !artist) return
+
+    // Live preview always renders on a fixed 1280x720 canvas bitmap that gets
+    // CSS-stretched to the selected resolution's aspect ratio afterward (see
+    // staticImage.js for the full explanation). Position/size math needs to
+    // happen against the real target resolution, then get pre-compensated
+    // with ctx.scale() so text isn't stretched by that later CSS resize.
+    const targetW = exportSettings.width  || W
+    const targetH = exportSettings.height || H
 
     const artistSize = Math.round(size * 0.62)
     const lineGap    = Math.round(size * 0.2)
@@ -23,15 +32,15 @@ export const textOverlay = {
         break
 
       case 'top-center':
-        tx       = W / 2
+        tx       = targetW / 2
         tyTitle  = MARGIN + size
         tyArtist = tyTitle + lineGap + artistSize
         align    = 'center'
         break
 
       case 'bottom-center':
-        tx       = W / 2
-        tyArtist = H - MARGIN
+        tx       = targetW / 2
+        tyArtist = targetH - MARGIN
         tyTitle  = tyArtist - lineGap - artistSize
         align    = 'center'
         break
@@ -45,17 +54,18 @@ export const textOverlay = {
 
       default: // 'bottom-left'
         tx       = MARGIN
-        tyArtist = H - MARGIN
+        tyArtist = targetH - MARGIN
         tyTitle  = tyArtist - lineGap - artistSize
         align    = 'left'
     }
 
     // When no artist, keep title at bottom edge
     if (!artist && (position === 'bottom-left' || position === 'bottom-center')) {
-      tyTitle = H - MARGIN
+      tyTitle = targetH - MARGIN
     }
 
     ctx.save()
+    ctx.scale(W / targetW, H / targetH)
     ctx.textBaseline  = 'alphabetic'
     ctx.textAlign     = align
     // Drop-shadow for legibility on any background

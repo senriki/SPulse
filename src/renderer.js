@@ -195,6 +195,8 @@ function _seekFromEvent(e) {
 
 // ─── Visualizer drag-to-reposition ───────────────────────────────────────────
 const canvasWrapper   = document.getElementById('canvas-wrapper')
+const bgSnapGuideV    = document.getElementById('bg-snap-guide-v')
+const bgSnapGuideH    = document.getElementById('bg-snap-guide-h')
 let _vizDragging      = false
 let _vizDragStartY    = 0
 let _vizDragStartOff  = 0
@@ -266,8 +268,20 @@ document.addEventListener('mousemove', e => {
     const dx = Math.round((e.clientX - _bgDragStartX) * scaleX)
     const dy = Math.round((e.clientY - _bgDragStartY) * scaleY)
 
-    visualizerState.background.offsetX = _bgDragStartOffX + dx
-    visualizerState.background.offsetY = _bgDragStartOffY + dy
+    // Snap to dead-center when close, so lining it up exactly is effortless
+    const SNAP_PX = 24
+    let newOffX = _bgDragStartOffX + dx
+    let newOffY = _bgDragStartOffY + dy
+    const snappedX = Math.abs(newOffX) <= SNAP_PX
+    const snappedY = Math.abs(newOffY) <= SNAP_PX
+    if (snappedX) newOffX = 0
+    if (snappedY) newOffY = 0
+
+    visualizerState.background.offsetX = newOffX
+    visualizerState.background.offsetY = newOffY
+
+    bgSnapGuideV?.classList.toggle('active', snappedX)
+    bgSnapGuideH?.classList.toggle('active', snappedY)
 
     if (!appState.analyser?.isPlaying) canvasEngine.stop()
     return
@@ -299,6 +313,8 @@ document.addEventListener('mouseup', () => {
   if (_bgDragging) {
     _bgDragging = false
     canvasWrapper?.classList.remove('bg-dragging')
+    bgSnapGuideV?.classList.remove('active')
+    bgSnapGuideH?.classList.remove('active')
     _setDirty()
     return
   }
