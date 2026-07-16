@@ -109,7 +109,6 @@ jobs:
       - name: Build & upload to GitHub Releases
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DEBUG: electron-builder,electron-builder:*
         run: npm run ${{ matrix.script }} -- --publish always
 
       # Stable releases only — uploads a copy of each installer under a fixed,
