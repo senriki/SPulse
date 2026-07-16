@@ -81,8 +81,15 @@ async function loadAudio(arrayBuffer, filePath) {
     dropOverlay.classList.add('hidden')
 
     // Pre-fill overlay text fields with parsed metadata
-    if (overlayTitle  && loader.metadata.title)  overlayTitle.value  = loader.metadata.title
-    if (overlayArtist && loader.metadata.artist) overlayArtist.value = loader.metadata.artist
+    // Setting .value directly doesn't fire 'input', so mirror into state too
+    if (overlayTitle  && loader.metadata.title) {
+      overlayTitle.value = loader.metadata.title
+      visualizerState.overlay.title = loader.metadata.title
+    }
+    if (overlayArtist && loader.metadata.artist) {
+      overlayArtist.value = loader.metadata.artist
+      visualizerState.overlay.artist = loader.metadata.artist
+    }
 
     // Suggest default output filename and sync exportSettings
     const baseName = loader.fileName.replace(/\.[^.]+$/, '')

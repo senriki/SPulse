@@ -3,6 +3,13 @@ import { drawGradient }    from './gradient.js'
 import { drawStaticImage } from './staticImage.js'
 import { VideoBackground } from './videoBackground.js'
 
+// Force one redraw only when playback is idle — the animation loop already
+// picks up the new background on its own next frame while playing, and
+// calling canvasEngine.stop() while playing would kill the RAF loop.
+function _refreshCanvasIfIdle() {
+  if (!window.appState?.analyser?.isPlaying) window.canvasEngine?.stop()
+}
+
 function _toFileURL(filePath) {
   if (filePath.startsWith('file://')) return filePath
   const normalized = filePath.replace(/\\/g, '/')
@@ -29,7 +36,7 @@ function _captureVideoThumb(vidEl, canvasId) {
       thumb.getContext('2d').drawImage(vidEl, 0, 0, 160, 90)
       thumb.classList.remove('hidden')
     } catch {}
-    window.canvasEngine?.stop()
+    _refreshCanvasIfIdle()
   }
   if (vidEl.readyState >= 2) {
     capture()
@@ -70,7 +77,7 @@ class BackgroundRenderer {
       img.onload = () => {
         bgState.imageEl = img
         _drawImageThumb(img, 'bg-image-thumb')
-        window.canvasEngine?.stop()
+        _refreshCanvasIfIdle()
       }
       img.onerror = () => console.warn('Could not reload background image:', bgState.imagePath)
     }
@@ -102,7 +109,7 @@ class BackgroundRenderer {
         bgState.imageEl   = img
         bgState.imagePath = filePath
         _drawImageThumb(img, 'bg-image-thumb')
-        window.canvasEngine?.stop()
+        _refreshCanvasIfIdle()
       }
       img.onerror = () => console.warn('Failed to load background image:', filePath)
     })
