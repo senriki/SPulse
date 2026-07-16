@@ -1,0 +1,20 @@
+name: Release Candidate
+
+# Tag a release candidate off any branch you're stabilizing, e.g.:
+#   git tag v1.1.0-rc.1 && git push origin v1.1.0-rc.1
+# Publishes the same builds as the stable pipeline, but flagged as a
+# GitHub pre-release — electron-updater ignores pre-releases by default,
+# so stable users never get nagged to update to an RC.
+#
+# Once validated, tag the plain version (v1.1.0, no suffix) to cut the
+# real release via release.yml.
+on:
+  push:
+    tags:
+      - 'v*-rc*'
+
+jobs:
+  build:
+    uses: ./.github/workflows/build-release.yml
+    with:
+      prerelease: true

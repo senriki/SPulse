@@ -1,6 +1,6 @@
 {
   "name": "spulse",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Audio waveform visualizer and MP4 exporter",
   "author": "Senriki <senrikis@gmail.com>",
   "license": "MIT",

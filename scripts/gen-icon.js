@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 // Generates build/icon.png (512×512), build/icon.ico (Windows), build/icon.icns (macOS)
 // from the SPulse icon design. Zero external dependencies — Node.js built-ins only.
-// Run: node scripts/gen-icon.js   OR   make icon
+// Run: node scripts/gen-icon.js               (stable — cyan)
+//      node scripts/gen-icon.js --channel=rc   (release candidate — amber)
+//      make icon
 
 'use strict'
 
@@ -9,10 +11,21 @@ const zlib = require('zlib')
 const fs   = require('fs')
 const path = require('path')
 
+// ── Channel ───────────────────────────────────────────────────────────────────
+// Same bar layout for every channel — only the accent color shifts, so RC/nightly
+// builds are visually distinct in the dock/taskbar without a separate icon design.
+const CHANNEL = (process.argv.find(a => a.startsWith('--channel='))?.split('=')[1]) || 'stable'
+
+const PALETTES = {
+  stable: { top: [0x20, 0xea, 0xff], bot: [0x00, 0x80, 0xaa] },  // #20eaff → #0080aa (cyan)
+  rc:     { top: [0xff, 0xb0, 0x20], bot: [0xaa, 0x55, 0x00] },  // #ffb020 → #aa5500 (amber)
+}
+if (!PALETTES[CHANNEL]) throw new Error(`Unknown --channel: ${CHANNEL}`)
+
 // ── Design ────────────────────────────────────────────────────────────────────
 const BG  = [0x0D, 0x11, 0x17]   // #0D1117 app background
-const TOP = [0x20, 0xea, 0xff]   // #20eaff bar gradient top
-const BOT = [0x00, 0x80, 0xaa]   // #0080aa bar gradient bottom
+const TOP = PALETTES[CHANNEL].top
+const BOT = PALETTES[CHANNEL].bot
 const GLOW_A = 18                // glow layer alpha
 
 // 6 bars at 512×512 (bottom-aligned at y=406)
@@ -176,6 +189,7 @@ for (const s of ALL_SIZES) {
 
 const buildDir = path.join(__dirname, '..', 'build')
 fs.mkdirSync(buildDir, { recursive: true })
+console.log(`channel: ${CHANNEL}`)
 
 fs.writeFileSync(path.join(buildDir, 'icon.png'), encoded[512].png)
 console.log(`✓ build/icon.png   512×512  ${encoded[512].png.length} bytes`)
