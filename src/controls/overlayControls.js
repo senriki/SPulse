@@ -58,9 +58,15 @@ export function initOverlayControls(overlayState) {
 
   // ── Size ──────────────────────────────────────────────────────────────────────
   setupSlider(
-    $('overlay-size'), $('overlay-size-val'),
+    $('overlay-size-title'), $('overlay-size-title-val'),
     v => `${v}px`,
-    v => { overlayState.size = Math.round(v) }
+    v => { overlayState.titleSize = Math.round(v) }
+  )
+
+  setupSlider(
+    $('overlay-size-artist'), $('overlay-size-artist-val'),
+    v => `${v}px`,
+    v => { overlayState.artistSize = Math.round(v) }
   )
 
   // ── Opacity ───────────────────────────────────────────────────────────────────

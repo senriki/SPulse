@@ -45,7 +45,8 @@ export function serializeState(audioFilePath) {
         artist:     ov.artist,
         titleFont:  ov.titleFont,
         artistFont: ov.artistFont,
-        size:     ov.size,
+        titleSize:  ov.titleSize,
+        artistSize: ov.artistSize,
         color:    ov.color,
         opacity:  ov.opacity,
         position: ov.position,
@@ -91,13 +92,18 @@ export function deserializeState(data) {
   visualizerState.background.videoEl   = null
 
   // Overlay
-  ;['enabled','title','artist','titleFont','artistFont','size','color','opacity','position','x','y'].forEach(k => {
+  ;['enabled','title','artist','titleFont','artistFont','titleSize','artistSize',
+    'color','opacity','position','x','y'].forEach(k => {
     if (ov[k] !== undefined) visualizerState.overlay[k] = ov[k]
   })
-  // Back-compat: pre-1.1 .spx files stored a single shared `font` field
+  // Back-compat: pre-1.1 .spx files stored a single shared `font`/`size` field
   if (ov.font !== undefined) {
     if (ov.titleFont === undefined)  visualizerState.overlay.titleFont  = ov.font
     if (ov.artistFont === undefined) visualizerState.overlay.artistFont = ov.font
+  }
+  if (ov.size !== undefined) {
+    if (ov.titleSize === undefined)  visualizerState.overlay.titleSize  = ov.size
+    if (ov.artistSize === undefined) visualizerState.overlay.artistSize = Math.round(ov.size * 0.62)
   }
 
   // Export settings (outputPath is session-only — never persisted)

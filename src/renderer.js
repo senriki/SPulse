@@ -613,7 +613,8 @@ function _syncDomFromState(vs, es) {
   set('overlay-x', ov.x); set('overlay-y', ov.y)
   set('overlay-color', ov.color)
   const szPct = Math.round(ov.opacity * 100)
-  set('overlay-size', ov.size); txt('overlay-size-val', `${ov.size}px`)
+  set('overlay-size-title', ov.titleSize); txt('overlay-size-title-val', `${ov.titleSize}px`)
+  set('overlay-size-artist', ov.artistSize); txt('overlay-size-artist-val', `${ov.artistSize}px`)
   set('overlay-opacity', szPct); txt('overlay-opacity-val', `${szPct}%`)
 
   // Export settings
