@@ -102,6 +102,12 @@ Stable builds are tagged `vX.Y.Z` and published as the "Latest Release" on GitHu
 
 ---
 
+## Contributing
+
+Want to help? See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for dev setup, code style, commit conventions, and how to submit a PR.
+
+---
+
 ## License
 
 MIT — see individual dependency licenses for FFmpeg (LGPL v2.1+), Inter (SIL OFL 1.1), and JetBrains Mono (Apache 2.0).
