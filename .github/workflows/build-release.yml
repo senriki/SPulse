@@ -110,3 +110,29 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx electron-builder ${{ matrix.args }} --publish always
+
+      # Stable releases only — uploads a copy of each installer under a fixed,
+      # version-less filename so README "Download" links via
+      # /releases/latest/download/<name> always resolve to the current build
+      # without needing to be updated on every release.
+      - name: Upload direct-download aliases
+        if: ${{ !inputs.prerelease }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          case "${{ matrix.os }}" in
+            windows-latest)
+              cp dist/SPulse-Setup-*.exe dist/SPulse-latest-win.exe
+              gh release upload "${{ github.ref_name }}" dist/SPulse-latest-win.exe --clobber
+              ;;
+            macos-latest)
+              cp dist/SPulse-*-arm64.dmg dist/SPulse-latest-mac-arm64.dmg
+              cp $(ls dist/SPulse-*.dmg | grep -v arm64) dist/SPulse-latest-mac-x64.dmg
+              gh release upload "${{ github.ref_name }}" dist/SPulse-latest-mac-arm64.dmg dist/SPulse-latest-mac-x64.dmg --clobber
+              ;;
+            ubuntu-latest)
+              cp dist/SPulse-*.AppImage dist/SPulse-latest-linux.AppImage
+              gh release upload "${{ github.ref_name }}" dist/SPulse-latest-linux.AppImage --clobber
+              ;;
+          esac
