@@ -12,6 +12,7 @@ function _snapshot(vs) {
     lineWidth:        vs.lineWidth,
     padding:          vs.padding,
     smoothing:        vs.smoothing,
+    sensitivity:      vs.sensitivity,
     centerVertically: vs.centerVertically,
     yOffset:          vs.yOffset,
     background: {

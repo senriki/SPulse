@@ -18,6 +18,9 @@ export const visualizerState = {
   // Smoothing (0–99 → 0.0–0.99 AnalyserNode.smoothingTimeConstant)
   smoothing: 80,
 
+  // Sensitivity: amplitude multiplier applied to all visualizer modes (1.0 = default)
+  sensitivity: 1.0,
+
   // Position
   centerVertically: true,
   yOffset: 0,

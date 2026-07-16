@@ -1,7 +1,7 @@
 // line_smooth: amplitude drawn as a smooth bezier curve using time-domain data
 // Uses getByteTimeDomainData (0–255, 128 = silence) downsampled to 256 pts for perf.
 export function drawLineSmooth(ctx, freqData, timeData, state, W, H) {
-  const { padding, lineWidth, color, opacity, glow, centerVertically, yOffset } = state
+  const { padding, lineWidth, color, opacity, glow, centerVertically, yOffset, sensitivity = 1 } = state
 
   const centerY   = centerVertically ? H / 2 + yOffset : H * 0.65 + yOffset
   const amplitude = (centerVertically ? H / 2 : H * 0.3) - padding
@@ -17,7 +17,7 @@ export function drawLineSmooth(ctx, freqData, timeData, state, W, H) {
     const v = (timeData[srcIdx] - 128) / 128   // -1..+1
     pts[i] = {
       x: padding + (i / (numPts - 1)) * usableW,
-      y: centerY - v * amplitude
+      y: centerY - Math.max(-1, Math.min(1, v * sensitivity)) * amplitude
     }
   }
 

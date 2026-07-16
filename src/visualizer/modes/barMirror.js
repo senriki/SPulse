@@ -1,6 +1,6 @@
 // bar_mirror: Classic bars reflected symmetrically above AND below the center axis
 export function drawBarMirror(ctx, freqData, timeData, state, W, H) {
-  const { padding, barWidth, barGap, color, opacity, glow, yOffset } = state
+  const { padding, barWidth, barGap, color, opacity, glow, yOffset, sensitivity = 1 } = state
 
   const step    = barWidth + barGap
   const numBars = Math.max(1, Math.floor((W - padding * 2) / step))
@@ -15,7 +15,7 @@ export function drawBarMirror(ctx, freqData, timeData, state, W, H) {
 
   for (let i = 0; i < numBars; i++) {
     const binIdx = Math.floor((i / numBars) * usableBins)
-    const mag    = freqData[binIdx] / 255
+    const mag    = Math.min(freqData[binIdx] / 255 * sensitivity, 1)
     const h      = Math.max(2, mag * maxHalf)
     const x      = padding + i * step
     ctx.fillRect(x, centerY - h, barWidth, h)   // above center

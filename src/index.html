@@ -193,12 +193,16 @@
           </div>
         </section>
 
-        <!-- Smoothing -->
+        <!-- Smoothing & Sensitivity -->
         <section class="panel-section">
-          <h3 class="section-label">Smoothing</h3>
+          <h3 class="section-label">Reactivity</h3>
           <div class="control-group">
-            <label class="control-label">Amount <span class="value-display" id="smoothing-val">80%</span></label>
+            <label class="control-label">Smoothing <span class="value-display" id="smoothing-val">80%</span></label>
             <input type="range" id="smoothing" class="range-input" min="0" max="99" value="80">
+          </div>
+          <div class="control-group">
+            <label class="control-label">Sensitivity <span class="value-display" id="sensitivity-val">100%</span></label>
+            <input type="range" id="sensitivity" class="range-input" min="10" max="300" step="5" value="100">
           </div>
         </section>
 

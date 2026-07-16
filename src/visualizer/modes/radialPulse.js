@@ -1,6 +1,6 @@
 // radial_pulse: circular frequency waveform radiating from center using polar coords
 export function drawRadialPulse(ctx, freqData, timeData, state, W, H) {
-  const { padding, lineWidth, color, opacity, glow, yOffset } = state
+  const { padding, lineWidth, color, opacity, glow, yOffset, sensitivity = 1 } = state
 
   const cx = W / 2
   const cy = H / 2 + yOffset
@@ -19,7 +19,7 @@ export function drawRadialPulse(ctx, freqData, timeData, state, W, H) {
   ctx.beginPath()
   for (let i = 0; i <= numBins; i++) {
     const angle = (i / numBins) * Math.PI * 2 - Math.PI / 2
-    const mag   = freqData[i % numBins] / 255
+    const mag   = Math.min(freqData[i % numBins] / 255 * sensitivity, 1)
     const r     = baseR + mag * maxR
     const x     = cx + Math.cos(angle) * r
     const y     = cy + Math.sin(angle) * r

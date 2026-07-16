@@ -340,6 +340,7 @@ function _applySnapshot(snap) {
     mode: snap.mode, color: snap.color, opacity: snap.opacity, glow: snap.glow,
     barWidth: snap.barWidth, barGap: snap.barGap, lineWidth: snap.lineWidth,
     padding: snap.padding, smoothing: snap.smoothing,
+    sensitivity: snap.sensitivity ?? 1.0,
     centerVertically: snap.centerVertically, yOffset: snap.yOffset,
   })
   Object.assign(visualizerState.background, snap.background)
@@ -418,6 +419,8 @@ function _syncDomFromState(vs, es) {
   set('canvas-padding', vs.padding); txt('canvas-padding-val', `${vs.padding}px`)
   set('smoothing', vs.smoothing); txt('smoothing-val', `${vs.smoothing}%`)
   appState.analyser?.setSmoothingTimeConstant(vs.smoothing / 100)
+  const sensPct = Math.round((vs.sensitivity ?? 1) * 100)
+  set('sensitivity', sensPct); txt('sensitivity-val', `${sensPct}%`)
   chk('waveform-center', vs.centerVertically)
   set('y-offset', vs.yOffset); txt('y-offset-val', `${Math.round(vs.yOffset)}px`)
 

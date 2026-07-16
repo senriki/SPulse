@@ -4,7 +4,7 @@
 // W, H: canvas logical resolution (1280×720 in preview)
 // timeData unused here — present to satisfy the shared draw fn signature
 export function drawBarClassic(ctx, freqData, timeData, state, W, H) {
-  const { padding, barWidth, barGap, color, opacity, glow, centerVertically, yOffset } = state
+  const { padding, barWidth, barGap, color, opacity, glow, centerVertically, yOffset, sensitivity = 1 } = state
 
   const step    = barWidth + barGap
   const availW  = W - padding * 2
@@ -28,7 +28,7 @@ export function drawBarClassic(ctx, freqData, timeData, state, W, H) {
 
   for (let i = 0; i < numBars; i++) {
     const binIdx = Math.floor((i / numBars) * usableBins)
-    const mag    = freqData[binIdx] / 255
+    const mag    = Math.min(freqData[binIdx] / 255 * sensitivity, 1)
     const barH   = Math.max(2, mag * maxBarH)
     const x      = padding + i * step
     ctx.fillRect(x, baseline - barH, barWidth, barH)

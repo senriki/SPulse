@@ -1,6 +1,6 @@
 // spectrum_glow: bars with frequency-mapped color gradient (bass=warm, treble=cool) + bloom
 export function drawSpectrumGlow(ctx, freqData, timeData, state, W, H) {
-  const { padding, barWidth, barGap, opacity, glow, centerVertically, yOffset } = state
+  const { padding, barWidth, barGap, opacity, glow, centerVertically, yOffset, sensitivity = 1 } = state
 
   const step       = barWidth + barGap
   const numBars    = Math.max(1, Math.floor((W - padding * 2) / step))
@@ -14,7 +14,7 @@ export function drawSpectrumGlow(ctx, freqData, timeData, state, W, H) {
 
   for (let i = 0; i < numBars; i++) {
     const binIdx = Math.floor((i / numBars) * usableBins)
-    const mag    = freqData[binIdx] / 255
+    const mag    = Math.min(freqData[binIdx] / 255 * sensitivity, 1)
     const barH   = Math.max(2, mag * maxBarH)
     const x      = padding + i * step
 

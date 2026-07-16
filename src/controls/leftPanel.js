@@ -68,6 +68,13 @@ export function initLeftPanel(appState, visualizerState) {
     }
   )
 
+  // ─── Sensitivity ─────────────────────────────────────────────────────────
+  setupSlider(
+    $('sensitivity'), $('sensitivity-val'),
+    v => `${v}%`,
+    v => { visualizerState.sensitivity = v / 100 }
+  )
+
   // ─── Waveform Position ────────────────────────────────────────────────────
   $('waveform-center').addEventListener('change', e => {
     visualizerState.centerVertically = e.target.checked

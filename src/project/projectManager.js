@@ -21,6 +21,7 @@ export function serializeState(audioFilePath) {
       lineWidth:        visualizerState.lineWidth,
       padding:          visualizerState.padding,
       smoothing:        visualizerState.smoothing,
+      sensitivity:      visualizerState.sensitivity,
       centerVertically: visualizerState.centerVertically,
       yOffset:          visualizerState.yOffset,
       background: {
@@ -70,7 +71,7 @@ export function deserializeState(data) {
 
   // Visualizer top-level fields
   ;['mode','color','opacity','glow','barWidth','barGap','lineWidth','padding',
-    'smoothing','centerVertically','yOffset'].forEach(k => {
+    'smoothing','sensitivity','centerVertically','yOffset'].forEach(k => {
     if (vs[k] !== undefined) visualizerState[k] = vs[k]
   })
 
