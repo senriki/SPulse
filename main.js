@@ -226,11 +226,7 @@ function _buildFFmpegArgs(config, mode, frameDir) {
   const args = []
 
   if (mode === 'pipe') {
-    args.push(
-      '-f', 'rawvideo', '-pix_fmt', 'rgba',
-      '-video_size', `${width}x${height}`, '-framerate', String(fps),
-      '-i', 'pipe:0'
-    )
+    args.push('-f', 'image2pipe', '-framerate', String(fps), '-vcodec', 'mjpeg', '-i', 'pipe:0')
   } else {
     args.push('-framerate', String(fps), '-i', path.join(frameDir, 'frame%08d.jpg'))
   }
@@ -343,12 +339,13 @@ ipcMain.handle('export-frame', async (event, { frameData, frameIndex }) => {
     : 0
 
   if (_session.frameWriter) {
-    // Disk path: write to temp file (frameData is a JPEG data URL string)
+    // Disk path: write to temp file
     _session.frameWriter.writeFrame(frameData)
   } else if (_session.proc) {
-    // Pipe path: frameData is a raw RGBA ArrayBuffer — write straight to FFmpeg stdin
-    const buf = Buffer.from(frameData)
-    const ok  = _session.proc.stdin.write(buf)
+    // Pipe path: write decoded JPEG buffer to FFmpeg stdin
+    const base64 = frameData.replace(/^data:image\/\w+;base64,/, '')
+    const buf    = Buffer.from(base64, 'base64')
+    const ok     = _session.proc.stdin.write(buf)
     // Respect backpressure — wait for drain if buffer is full
     if (!ok) await new Promise(res => _session.proc.stdin.once('drain', res))
   }

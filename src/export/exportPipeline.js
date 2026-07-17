@@ -131,17 +131,6 @@ export async function startExport() {
     canvasEngine.setExportResolution(w, h)
 
     // ── Frame render loop ─────────────────────────────────────────────────────
-    // Frames are dispatched to Main without awaiting each IPC round trip, so canvas
-    // rendering for frame N+1 can overlap with frame N's transport/write instead of
-    // stalling the GPU encoder between frames. In-flight sends are capped (not
-    // unbounded) to avoid buffering many uncompressed HD/4K frames in memory at once.
-    // Ordering is preserved: invoke() calls are issued strictly in frame order from
-    // this single-threaded loop, and Electron's IPC delivers same-channel messages
-    // FIFO, so Main's export-frame handler always reaches its stdin.write()/disk-write
-    // call for frame N before frame N+1's.
-    const MAX_IN_FLIGHT = 3
-    const inFlight = []
-
     for (let frame = 0; frame < totalFrames; frame++) {
       if (_cancelled) break
 
@@ -150,32 +139,11 @@ export async function startExport() {
       canvasEngine.setExportData(freqData, timeData)
       canvasEngine.renderSyncFrame()
 
-      let sendPromise
-      if (useDisk) {
-        // JPEG is much faster to encode than PNG; quality 0.92 is indistinguishable at target bitrate
-        const dataURL = canvasEngine.r2d.toDataURL('image/jpeg', 0.92)
-        sendPromise = window.api.exportFrame(dataURL, frame)
-      } else {
-        // Pipe mode: send raw RGBA pixels directly (matches main.js's rawvideo ffmpeg
-        // input). Skips a JPEG encode/decode round trip that otherwise starves the
-        // GPU encoder of frames.
-        const { ctx, width, height } = canvasEngine.r2d
-        const raw = ctx.getImageData(0, 0, width, height).data
-        sendPromise = window.api.exportFrame(raw.buffer, frame)
-      }
-
-      inFlight.push(sendPromise)
+      // JPEG is much faster to encode than PNG; quality 0.92 is indistinguishable at target bitrate
+      const dataURL = canvasEngine.r2d.toDataURL('image/jpeg', 0.92)
+      await window.api.exportFrame(dataURL, frame)
       progressModal.update(frame + 1, totalFrames)
-
-      if (inFlight.length >= MAX_IN_FLIGHT) {
-        await inFlight.shift()
-      }
     }
-
-    // Drain any still-outstanding sends before signaling completion/cancellation —
-    // critical on the non-cancelled path so exportDone()'s stdin.end() (pipe mode)
-    // never fires before every dispatched frame has actually been written.
-    await Promise.all(inFlight)
 
     if (_cancelled) {
       progressModal.hide()

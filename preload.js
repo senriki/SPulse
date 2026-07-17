@@ -14,7 +14,6 @@ contextBridge.exposeInMainWorld('api', {
   // Export pipeline
   exportVideo: (config) =>
     ipcRenderer.invoke('export-video', config),
-  // frameData: disk mode = JPEG data URL string; pipe mode = raw RGBA ArrayBuffer
   exportFrame: (frameData, frameIndex) =>
     ipcRenderer.invoke('export-frame', { frameData, frameIndex }),
   exportCancel: () =>
