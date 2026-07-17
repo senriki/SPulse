@@ -265,6 +265,41 @@ function _bumpPriority(pid) {
   } catch { /* non-fatal — can fail without elevated permissions on some setups */ }
 }
 
+// Append " (1)", " (2)", ... before the extension until the path doesn't collide with
+// an existing file — same convention as Windows Explorer / most desktop apps.
+function _resolveNonCollidingPath(desiredPath) {
+  if (!fs.existsSync(desiredPath)) return desiredPath
+  const dir  = path.dirname(desiredPath)
+  const ext  = path.extname(desiredPath)
+  const base = path.basename(desiredPath, ext)
+  let n = 1
+  let candidate
+  do {
+    candidate = path.join(dir, `${base} (${n})${ext}`)
+    n++
+  } while (fs.existsSync(candidate))
+  return candidate
+}
+
+// Kill an export session's FFmpeg process (if any) and clean up after it — including
+// deleting whatever partial/corrupt output file a killed (not gracefully finished)
+// FFmpeg process leaves behind at its target path. Used both when export-video
+// supersedes a stale session and when the user explicitly cancels.
+function _abortSession(session) {
+  if (!session) return
+  const outputPath = session.config?.outputPath
+  const proc = session.proc
+  if (proc) {
+    if (outputPath) {
+      proc.once('close', () => {
+        try { fs.unlinkSync(outputPath) } catch {}
+      })
+    }
+    try { proc.kill('SIGKILL') } catch {}
+  }
+  session.frameWriter?.cleanup()
+}
+
 function _exportErrorMsg(code, log) {
   if (/permission denied|access is denied|EPERM/i.test(log)) {
     return 'Output folder is protected by Windows Controlled Folder Access. Choose a different output location, or go to Windows Security → Virus & threat protection → Ransomware protection → Allow an app through Controlled folder access → add SPulse.'
@@ -275,10 +310,14 @@ function _exportErrorMsg(code, log) {
 // export-video: validate config, spawn FFmpeg (pipe mode) or init disk writer
 ipcMain.handle('export-video', async (event, config) => {
   // Clean up any previous session
-  if (_session) {
-    try { _session.proc?.kill('SIGKILL') } catch {}
-    _session.frameWriter?.cleanup()
-    _session = null
+  _abortSession(_session)
+  _session = null
+
+  // Auto-rename to avoid silently overwriting an existing file — unless the user just
+  // explicitly confirmed this exact path via the native save dialog this run (which
+  // already handles its own overwrite confirmation prompt).
+  if (!config.confirmedPath) {
+    config.outputPath = _resolveNonCollidingPath(config.outputPath)
   }
 
   const { useDisk, totalFrames } = config
@@ -409,11 +448,10 @@ ipcMain.handle('export-done', async (event) => {
   return { ok: false }
 })
 
-// export-cancel: kill FFmpeg, clean up
+// export-cancel: kill FFmpeg, clean up (including any partial output file)
 ipcMain.handle('export-cancel', async () => {
   if (!_session) return { ok: true }
-  try { _session.proc?.kill('SIGKILL') } catch {}
-  _session.frameWriter?.cleanup()
+  _abortSession(_session)
   _session = null
   return { ok: true }
 })

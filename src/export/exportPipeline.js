@@ -101,6 +101,10 @@ export async function startExport() {
   const config = {
     width: w, height: h, fps, codec, encoder, audioMode, bitrate,
     audioPath: filePath, outputPath, totalFrames, duration, useDisk,
+    // Main auto-renames to avoid overwriting an existing file — unless the user just
+    // explicitly confirmed this exact path via the save dialog above this run, which
+    // already has its own native overwrite-confirmation prompt.
+    confirmedPath: exportSettings.askOnExport,
   }
 
   // ── Progress modal ──────────────────────────────────────────────────────────
