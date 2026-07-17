@@ -33,6 +33,9 @@ jobs:
           from datetime import date
 
           curr = subprocess.getoutput("git describe --tags --exact-match HEAD 2>/dev/null").strip()
+          if not curr:
+              curr = subprocess.getoutput("git rev-parse --short HEAD").strip()
+              print(f"Warning: no exact tag found, using commit SHA: {curr}")
           prev = subprocess.getoutput(
               f"git tag --sort=-v:refname | grep -v '^{curr}$' | head -1"
           ).strip()

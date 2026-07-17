@@ -35,7 +35,8 @@ module.exports = {
         arch: ['x64']
       }
     ],
-    category: 'AudioVideo'
+    category: 'AudioVideo',
+    executableArgs: ['--no-sandbox']
   },
   nsis: {
     oneClick: true,
