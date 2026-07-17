@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain, dialog, Menu, shell } = require('electron')
 const path        = require('path')
 const fs          = require('fs')
+const os          = require('os')
 const { spawn }   = require('child_process')
 const ffmpegBin   = require('./src/export/ffmpegPath')
 const { FrameWriter }       = require('./src/export/frameWriter')
@@ -225,7 +226,11 @@ function _buildFFmpegArgs(config, mode, frameDir) {
   const args = []
 
   if (mode === 'pipe') {
-    args.push('-f', 'image2pipe', '-framerate', String(fps), '-vcodec', 'mjpeg', '-i', 'pipe:0')
+    args.push(
+      '-f', 'rawvideo', '-pix_fmt', 'rgba',
+      '-video_size', `${width}x${height}`, '-framerate', String(fps),
+      '-i', 'pipe:0'
+    )
   } else {
     args.push('-framerate', String(fps), '-i', path.join(frameDir, 'frame%08d.jpg'))
   }
@@ -253,6 +258,15 @@ function _buildFFmpegArgs(config, mode, frameDir) {
   // Mux options
   args.push('-shortest', '-movflags', '+faststart', '-y', outputPath)
   return args
+}
+
+// Bump the ffmpeg child process above normal priority — reduces the chance Windows'
+// EcoQoS heuristics demote it into "Efficiency Mode" while it's mostly blocked waiting
+// on stdin/disk I/O, which otherwise compounds export slowness once data does arrive.
+function _bumpPriority(pid) {
+  try {
+    os.setPriority(pid, os.constants.priority.PRIORITY_ABOVE_NORMAL)
+  } catch { /* non-fatal — can fail without elevated permissions on some setups */ }
 }
 
 function _exportErrorMsg(code, log) {
@@ -292,6 +306,7 @@ ipcMain.handle('export-video', async (event, config) => {
     // Memory pipe: spawn FFmpeg immediately, pipe frames to stdin
     const args = _buildFFmpegArgs(config, 'pipe', null)
     const proc = spawn(ffmpegBin, args)
+    _bumpPriority(proc.pid)
     // Capture a stable reference — _session can be reset to null by export-cancel
     // or a superseding export-video call while this process is still winding down.
     const session = _session
@@ -328,13 +343,12 @@ ipcMain.handle('export-frame', async (event, { frameData, frameIndex }) => {
     : 0
 
   if (_session.frameWriter) {
-    // Disk path: write to temp file
+    // Disk path: write to temp file (frameData is a JPEG data URL string)
     _session.frameWriter.writeFrame(frameData)
   } else if (_session.proc) {
-    // Pipe path: write decoded JPEG buffer to FFmpeg stdin
-    const base64 = frameData.replace(/^data:image\/\w+;base64,/, '')
-    const buf    = Buffer.from(base64, 'base64')
-    const ok     = _session.proc.stdin.write(buf)
+    // Pipe path: frameData is a raw RGBA ArrayBuffer — write straight to FFmpeg stdin
+    const buf = Buffer.from(frameData)
+    const ok  = _session.proc.stdin.write(buf)
     // Respect backpressure — wait for drain if buffer is full
     if (!ok) await new Promise(res => _session.proc.stdin.once('drain', res))
   }
@@ -365,6 +379,7 @@ ipcMain.handle('export-done', async (event) => {
 
     return new Promise(resolve => {
       const proc    = spawn(ffmpegBin, args)
+      _bumpPriority(proc.pid)
       const session = _session
       proc.stderr.on('data', d => { session.ffmpegLog += d.toString() })
 
