@@ -90,6 +90,40 @@ export class VideoBackground {
   }
 
   get path() { return this._path }
+
+  // Deterministically position the video for one export frame instead of letting it
+  // autoplay in real time. Export's per-frame wall-clock cost doesn't track 1:1 with
+  // the exported timeline (worse at higher fps, since more frames must be generated
+  // per second of content) — an autoplaying video drifts further from the intended
+  // position the longer export takes, which is what made exported video backgrounds
+  // play back sped up. `t` loops via modulo against the video's own duration, matching
+  // the element's `loop = true` behavior.
+  seekTo(t) {
+    if (!this.el || !this.loaded || !this.el.duration) return Promise.resolve()
+    const target = t % this.el.duration
+    if (Math.abs(this.el.currentTime - target) < 0.001) return Promise.resolve()
+    return new Promise(resolve => {
+      let done = false
+      const finish = () => {
+        if (done) return
+        done = true
+        this.el.removeEventListener('seeked', finish)
+        resolve()
+      }
+      this.el.addEventListener('seeked', finish)
+      this.el.currentTime = target
+      // Safety net — some codecs/drivers can fail to fire 'seeked' in rare cases;
+      // don't let one bad seek hang the whole export.
+      setTimeout(finish, 500)
+    })
+  }
+
+  // Export brackets — pause real-time autoplay before driving position via seekTo(),
+  // resume normal autoplay afterward so live preview behaves as it always has.
+  pauseForExport()   { this.el?.pause() }
+  resumeAfterExport() {
+    if (this.el && this.loaded) this.el.play().catch(() => {})
+  }
 }
 
 function _toFileURL(filePath) {

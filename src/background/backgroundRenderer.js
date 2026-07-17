@@ -69,6 +69,21 @@ class BackgroundRenderer {
     }
   }
 
+  // ── Export-only video sync (see videoBackground.js for why this exists) ─────────
+  // No-op for any background type other than 'video', so callers can invoke these
+  // unconditionally per export frame without checking the active type themselves.
+  async seekVideoTo(bgState, t) {
+    if (bgState?.type === 'video') await this._videoBg.seekTo(t)
+  }
+
+  prepareVideoForExport(bgState) {
+    if (bgState?.type === 'video') this._videoBg.pauseForExport()
+  }
+
+  resumeVideoAfterExport(bgState) {
+    if (bgState?.type === 'video') this._videoBg.resumeAfterExport()
+  }
+
   // Reload image/video elements from stored paths (called after project load).
   reloadFromState(bgState) {
     if (bgState.imagePath) {

@@ -3,10 +3,11 @@
 // and signals when all frames are sent.
 // Uses window.appState to avoid circular import with renderer.js.
 
-import { progressModal }   from './progressModal.js'
-import { canvasEngine }    from '../visualizer/canvasEngine.js'
-import { exportSettings }  from './exportSettings.js'
-import { showErrorDialog } from '../ui/errorDialog.js'
+import { progressModal }    from './progressModal.js'
+import { canvasEngine }     from '../visualizer/canvasEngine.js'
+import { exportSettings }   from './exportSettings.js'
+import { showErrorDialog }  from '../ui/errorDialog.js'
+import { visualizerState }  from '../visualizer/visualizerState.js'
 
 // ─── Offline audio data for export frames ────────────────────────────────────
 // Derives time-domain (accurate) and pseudo-frequency data from the raw
@@ -134,6 +135,11 @@ export async function startExport() {
     canvasEngine.stop()
     canvasEngine.setExportResolution(w, h)
 
+    // Video backgrounds normally autoplay in real time — stop that for export, since
+    // per-frame wall-clock cost doesn't track the exported timeline 1:1 (see
+    // videoBackground.js). Position is driven explicitly per frame below instead.
+    window.backgroundRenderer?.prepareVideoForExport(visualizerState.background)
+
     // ── Frame render loop ─────────────────────────────────────────────────────
     for (let frame = 0; frame < totalFrames; frame++) {
       if (_cancelled) break
@@ -141,6 +147,9 @@ export async function startExport() {
       const t = frame / fps
       const { freqData, timeData } = getAudioDataAtTime(audioLoader, t)
       canvasEngine.setExportData(freqData, timeData)
+      // No-op unless the active background is a video — keeps it positioned to this
+      // frame's timeline instead of wherever real-time autoplay would have left it.
+      await window.backgroundRenderer?.seekVideoTo(visualizerState.background, t)
       canvasEngine.renderSyncFrame()
 
       // JPEG is much faster to encode than PNG; quality 0.92 is indistinguishable at target bitrate
@@ -163,6 +172,7 @@ export async function startExport() {
   } finally {
     canvasEngine.clearExportData()
     canvasEngine.restorePreviewResolution()
+    window.backgroundRenderer?.resumeVideoAfterExport(visualizerState.background)
     _exporting = false
     if (btnExport) btnExport.disabled = false
     if (btnPlay)   btnPlay.disabled   = false
