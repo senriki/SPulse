@@ -36,9 +36,21 @@ jobs:
           if not curr:
               curr = subprocess.getoutput("git rev-parse --short HEAD").strip()
               print(f"Warning: no exact tag found, using commit SHA: {curr}")
-          prev = subprocess.getoutput(
-              f"git tag --sort=-v:refname | grep -v '^{curr}$' | head -1"
-          ).strip()
+
+          # git's default tag sort has no concept of semver prerelease precedence, so a
+          # bare "v1.1.0" can sort BELOW "v1.1.0-rc.14" there — picking the RC as "prev"
+          # for the stable release yields a near-empty diff (just the version-bump
+          # commit). Sort by creation time instead, which always matches true release
+          # chronology regardless of version-string suffixes.
+          stable_re = re.compile(r'^v?\d+\.\d+\.\d+$')
+          all_tags  = subprocess.getoutput("git tag --sort=-creatordate").splitlines()
+          candidates = [t for t in all_tags if t and t != curr]
+          if stable_re.match(curr):
+              # A stable release's notes should summarize everything since the last
+              # STABLE tag, not just the last RC — RC-vs-stable would be near-empty.
+              candidates = [t for t in candidates if stable_re.match(t)]
+          prev = candidates[0] if candidates else ''
+
           range_arg = f"{prev}..HEAD" if prev else "HEAD"
           raw = subprocess.getoutput(f"git log --pretty=format:%s {range_arg}").splitlines()
 
