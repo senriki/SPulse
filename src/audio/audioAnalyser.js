@@ -48,8 +48,15 @@ export class AudioAnalyser {
     this._sourceNode.start(0, this._startOffset)
     this._isPlaying = true
 
+    // Capture this call's node so a stale 'ended' event from an old, manually-stopped
+    // node (e.g. seek() stops the old node then immediately starts a new one) can't
+    // corrupt playback state for whatever node is actually current by the time the
+    // (async) 'ended' event fires — AudioBufferSourceNode.stop() fires 'ended' too,
+    // not just natural end-of-buffer, and that event doesn't arrive synchronously.
+    const node = this._sourceNode
     this._sourceNode.onended = () => {
-      if (!this._isPlaying) return   // stopped manually
+      if (node !== this._sourceNode) return   // stale — superseded by a newer node
+      if (!this._isPlaying) return            // stopped manually
       this._isPlaying = false
       this._startOffset = 0
       this.onEnded?.()
