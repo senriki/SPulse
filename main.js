@@ -169,21 +169,27 @@ ipcMain.handle('save-project', async (event, { data, defaultPath }) => {
   return filePath
 })
 
+// Portable exports use a distinct .spulse extension — visually distinguishable from a
+// regular .spx save in the OS file browser, without needing to open the app to tell
+// them apart (see also the in-app "This device" / "Portable" captions in index.html).
 ipcMain.handle('export-project', async (event, { data, defaultPath }) => {
   const { canceled, filePath } = await dialog.showSaveDialog({
     title: 'Export Project',
-    defaultPath: defaultPath || 'project.spx',
-    filters: [{ name: 'SPulse Project', extensions: ['spx'] }]
+    defaultPath: defaultPath || 'project.spulse',
+    filters: [{ name: 'SPulse Portable Project', extensions: ['spulse'] }]
   })
   if (canceled || !filePath) return null
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8')
   return filePath
 })
 
+// Accepts both extensions — deserializeState() (renderer side) transparently handles
+// both legacy v1.0 (.spx) and portable v2.0 (.spulse) content regardless of which
+// button opened the dialog, so there's no reason to force the "wrong" extension away.
 ipcMain.handle('load-project', async () => {
   const { canceled, filePaths } = await dialog.showOpenDialog({
     title: 'Open Project',
-    filters: [{ name: 'SPulse Project', extensions: ['spx'] }],
+    filters: [{ name: 'SPulse Project', extensions: ['spx', 'spulse'] }],
     properties: ['openFile']
   })
   if (canceled || filePaths.length === 0) return null
@@ -197,7 +203,7 @@ ipcMain.handle('load-project', async () => {
 ipcMain.handle('import-project', async () => {
   const { canceled, filePaths } = await dialog.showOpenDialog({
     title: 'Import Project',
-    filters: [{ name: 'SPulse Project', extensions: ['spx'] }],
+    filters: [{ name: 'SPulse Project', extensions: ['spulse', 'spx'] }],
     properties: ['openFile']
   })
   if (canceled || filePaths.length === 0) return null

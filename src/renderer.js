@@ -599,7 +599,7 @@ function _scheduleAutoSaveLastSession() {
 
 function _updateTitleBar() {
   if (!_projectFilePath) { document.title = 'SPulse'; return }
-  const name = _projectFilePath.replace(/.*[\\/]/, '').replace(/\.spx$/i, '')
+  const name = _projectFilePath.replace(/.*[\\/]/, '').replace(/\.(spx|spulse)$/i, '')
   document.title = _isDirty ? `${name}* — SPulse` : `${name} — SPulse`
 }
 
@@ -703,11 +703,14 @@ function _syncDomFromState(vs, es) {
 
 // ─── Project: save ────────────────────────────────────────────────────────────
 async function _saveProject() {
-  const defaultPath = _projectFilePath || (
-    appState.fileName
-      ? appState.fileName.replace(/\.[^.]+$/, '') + '.spx'
-      : 'project.spx'
-  )
+  // Always suggest a .spx name — _projectFilePath may be a .spulse path if the
+  // currently-open project was imported rather than loaded, and Save always
+  // produces the local (non-portable) format regardless of how it was opened.
+  const defaultPath = _projectFilePath
+    ? _projectFilePath.replace(/\.(spx|spulse)$/i, '') + '.spx'
+    : (appState.fileName
+        ? appState.fileName.replace(/\.[^.]+$/, '') + '.spx'
+        : 'project.spx')
   const data      = serializeState(appState.filePath || '')
   const savedPath = await window.api.saveProject(data, defaultPath)
   if (!savedPath) return   // user cancelled
@@ -722,8 +725,8 @@ async function _saveProject() {
 // the exported file is a portable copy, not the user's currently-open project file.
 async function _exportProject() {
   const defaultPath = appState.fileName
-    ? appState.fileName.replace(/\.[^.]+$/, '') + '.spx'
-    : 'project.spx'
+    ? appState.fileName.replace(/\.[^.]+$/, '') + '.spulse'
+    : 'project.spulse'
   const data      = await serializePortableState(appState.filePath || '')
   const savedPath = await window.api.exportProject(data, defaultPath)
   if (!savedPath) return   // user cancelled
