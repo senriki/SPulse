@@ -178,6 +178,45 @@ The tag with no suffix is what `release.yml` matches — this is the one that be
 
 `scripts/gen-icon.js --channel=rc` swaps the bar gradient from cyan (`#20eaff → #0080aa`) to amber (`#ffb020 → #aa5500`) — same shape, different accent color, so an RC build is visually distinct in the dock/taskbar. The reusable workflow passes `--channel=rc` automatically when `prerelease: true`; no manual step needed. Run without the flag (or omit it) for the stable cyan icon.
 
+## `debug/` Folder Conventions
+
+The `debug/` folder at the project root holds working material that supports
+development but isn't shipped — PRDs, planning sessions, and ad-hoc memos. It is
+project-specific and lives in-repo (not in any external tool or in Claude's
+cross-session memory) so context travels with the repo.
+
+```
+debug/
+├── memo/                    # Dated, ad-hoc decision/idea memos (see below)
+└── prd/
+    ├── *.md                 # PRD documents (one feature/release per file)
+    └── session/
+        └── <session-id>/    # One planned+tracked implementation per PRD
+            ├── manifest.md  # Session metadata: PRD path, status, task count
+            ├── status.md    # Current progress across tasks
+            ├── memory.md    # Cross-task context/decisions for continuity
+            └── task-N.md    # One file per planned task
+```
+
+### Memos (`debug/memo/`)
+Use for recording a decision, rationale, or idea that isn't captured anywhere else
+(not in code, not in a PRD) — e.g. "why did we scope X out of this release,"
+or a future-project idea that came up mid-conversation and isn't being acted on now.
+- Filename: `YYYY-MM-DD-short-slug.md`.
+- Keep it to: what was decided/floated, why, and what (if anything) should happen
+  if it's revisited later.
+- Don't use this for anything that belongs in a commit message, code comment, or
+  PRD — those are the source of truth for their respective concerns.
+
+### PRDs and sessions (`debug/prd/`)
+- `/prd-plan` reads a PRD from `debug/prd/*.md` and creates or updates a session
+  under `debug/prd/session/<session-id>/`.
+- `/prd-execute <session-id>` executes the next pending task from that session,
+  updating `status.md` and `memory.md` as it goes.
+- `/prd-status [session-id]` reports progress without changing anything.
+- Always plan and execute PRD work through this folder structure — don't track
+  PRD-driven implementation ad hoc outside of a session directory.
+
 ## Open Questions (Defer Until Specified Phase)
 | ID | Question | Deferred To |
 |---|---|---|
