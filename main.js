@@ -75,6 +75,9 @@ function createMenu() {
         { label: 'Save Project', accelerator: 'CmdOrCtrl+S', click: () => _mainWin?.webContents.send('menu-save-project') },
         { label: 'Load Project…', click: () => _mainWin?.webContents.send('menu-load-project') },
         { type: 'separator' },
+        { label: 'Export Project…', click: () => _mainWin?.webContents.send('menu-export-project') },
+        { label: 'Import Project…', click: () => _mainWin?.webContents.send('menu-import-project') },
+        { type: 'separator' },
         isMac ? { role: 'close' } : { role: 'quit' }
       ]
     },
@@ -164,6 +167,17 @@ ipcMain.handle('save-project', async (event, { data, defaultPath }) => {
   return filePath
 })
 
+ipcMain.handle('export-project', async (event, { data, defaultPath }) => {
+  const { canceled, filePath } = await dialog.showSaveDialog({
+    title: 'Export Project',
+    defaultPath: defaultPath || 'project.spx',
+    filters: [{ name: 'SPulse Project', extensions: ['spx'] }]
+  })
+  if (canceled || !filePath) return null
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8')
+  return filePath
+})
+
 ipcMain.handle('load-project', async () => {
   const { canceled, filePaths } = await dialog.showOpenDialog({
     title: 'Open Project',
@@ -176,6 +190,32 @@ ipcMain.handle('load-project', async () => {
   return { filePath, data }
 })
 
+// Same read logic as load-project — deserializeState() (renderer side) transparently
+// handles both legacy v1.0 and portable v2.0 files, so this only differs in dialog title.
+ipcMain.handle('import-project', async () => {
+  const { canceled, filePaths } = await dialog.showOpenDialog({
+    title: 'Import Project',
+    filters: [{ name: 'SPulse Project', extensions: ['spx'] }],
+    properties: ['openFile']
+  })
+  if (canceled || filePaths.length === 0) return null
+  const filePath = filePaths[0]
+  const data = JSON.parse(fs.readFileSync(filePath, 'utf8'))
+  return { filePath, data }
+})
+
+// ─── Auto-persisted last-used settings (no dialog) ───────────────────────────
+ipcMain.handle('save-last-session', (event, data) => {
+  const filePath = path.join(app.getPath('userData'), 'last-session.json')
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8')
+})
+
+ipcMain.handle('load-last-session', () => {
+  const filePath = path.join(app.getPath('userData'), 'last-session.json')
+  if (!fs.existsSync(filePath)) return null
+  return JSON.parse(fs.readFileSync(filePath, 'utf8'))
+})
+
 // ─── Load audio by explicit path (used by project load — no dialog) ──────────
 ipcMain.handle('load-audio-path', async (event, filePath) => {
   try {
@@ -184,6 +224,26 @@ ipcMain.handle('load-audio-path', async (event, filePath) => {
   } catch (err) {
     return { error: err.message }
   }
+})
+
+// ─── Read a file as base64 (used for portable project export) ───────────────
+ipcMain.handle('read-file-as-base64', (event, filePath) => {
+  try {
+    return { data: fs.readFileSync(filePath).toString('base64') }
+  } catch (err) {
+    return { error: err.message }
+  }
+})
+
+// ─── Write base64 data to a uniquely-named temp file (portable project import) ──
+// Each call gets its own temp subfolder so repeated imports / multiple assets in the
+// same import never collide, and the original filename/extension is preserved.
+ipcMain.handle('write-temp-file', (event, { filename, data }) => {
+  const dir = path.join(app.getPath('temp'), `spulse-import-${Date.now()}-${Math.random().toString(36).slice(2)}`)
+  fs.mkdirSync(dir, { recursive: true })
+  const filePath = path.join(dir, filename || 'asset')
+  fs.writeFileSync(filePath, Buffer.from(data, 'base64'))
+  return filePath
 })
 
 // ─── Output path save dialog ─────────────────────────────────────────────────

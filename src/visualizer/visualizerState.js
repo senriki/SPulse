@@ -1,64 +1,84 @@
 // Central visualizer configuration — all modules read from this object.
 // Task-5 wires left-panel controls to mutate these values.
 // Task-9 (export) reads this for per-frame rendering.
-export const visualizerState = {
-  mode: 'bar_classic',
 
-  // Waveform appearance
-  color:   '#00D4FF',
-  opacity: 1.0,
-  glow:    0,          // 0–100 maps to 0–30px shadowBlur
+// Single source of truth for the hardcoded defaults — returns a fresh object each
+// call so callers never share mutable state with each other or with `visualizerState`.
+// Used both to build the initial `visualizerState` below and to power the
+// "Reset to default" action (see resetVisualizerStateToDefaults).
+function _createDefaultVisualizerState() {
+  return {
+    mode: 'bar_classic',
 
-  // Bar / line dimensions
-  barWidth:  4,
-  barGap:    1,
-  lineWidth: 2,
-  padding:   16,
+    // Waveform appearance
+    color:   '#00D4FF',
+    opacity: 1.0,
+    glow:    0,          // 0–100 maps to 0–30px shadowBlur
 
-  // Smoothing (0–99 → 0.0–0.99 AnalyserNode.smoothingTimeConstant)
-  smoothing: 80,
+    // Bar / line dimensions
+    barWidth:  4,
+    barGap:    1,
+    lineWidth: 2,
+    padding:   16,
 
-  // Sensitivity: amplitude multiplier applied to all visualizer modes (1.0 = default)
-  sensitivity: 1.0,
+    // Smoothing (0–99 → 0.0–0.99 AnalyserNode.smoothingTimeConstant)
+    smoothing: 80,
 
-  // Position
-  centerVertically: true,
-  yOffset: 0,
+    // Sensitivity: amplitude multiplier applied to all visualizer modes (1.0 = default)
+    sensitivity: 1.0,
 
-  // Background — task-7 populates and renders this
-  background: {
-    type:          'solid',
-    color:         '#0D1117',
-    gradientA:     '#0D1117',
-    gradientB:     '#1a2040',
-    gradientAngle: 135,
-    imageBlur:     0,
-    imageDarken:   0,
-    imagePath:     null,
-    videoPath:     null,
-    imageEl:       null,   // HTMLImageElement — set by backgroundRenderer
-    videoEl:       null,   // HTMLVideoElement — set by backgroundRenderer
+    // Position
+    centerVertically: true,
+    yOffset: 0,
 
-    // Fit / position — applies to image and video backgrounds
-    fitMode:  'cover',   // 'cover' | 'contain' | 'blur-fill'
-    scale:    1,         // user zoom multiplier on top of the fit-mode base scale
-    offsetX:  0,         // px pan offset (logical canvas px), drag-to-reposition
-    offsetY:  0,
-  },
+    // Background — task-7 populates and renders this
+    background: {
+      type:          'solid',
+      color:         '#0D1117',
+      gradientA:     '#0D1117',
+      gradientB:     '#1a2040',
+      gradientAngle: 135,
+      imageBlur:     0,
+      imageDarken:   0,
+      imagePath:     null,
+      videoPath:     null,
+      imageEl:       null,   // HTMLImageElement — set by backgroundRenderer
+      videoEl:       null,   // HTMLVideoElement — set by backgroundRenderer
 
-  // Text overlay — task-8 populates and renders this
-  overlay: {
-    enabled:  false,
-    title:    '',
-    artist:   '',
-    titleFont:  'Inter, system-ui, sans-serif',
-    artistFont: 'Inter, system-ui, sans-serif',
-    titleSize:  32,
-    artistSize: 20,
-    color:    '#E6EDF3',
-    opacity:  1.0,
-    position: 'bottom-left',
-    x:        40,
-    y:        40,
-  },
+      // Fit / position — applies to image and video backgrounds
+      fitMode:  'cover',   // 'cover' | 'contain' | 'blur-fill'
+      scale:    1,         // user zoom multiplier on top of the fit-mode base scale
+      offsetX:  0,         // px pan offset (logical canvas px), drag-to-reposition
+      offsetY:  0,
+    },
+
+    // Text overlay — task-8 populates and renders this
+    overlay: {
+      enabled:  false,
+      title:    '',
+      artist:   '',
+      titleFont:  'Inter, system-ui, sans-serif',
+      artistFont: 'Inter, system-ui, sans-serif',
+      titleSize:  32,
+      artistSize: 20,
+      color:    '#E6EDF3',
+      opacity:  1.0,
+      position: 'bottom-left',
+      x:        40,
+      y:        40,
+    },
+  }
+}
+
+export const visualizerState = _createDefaultVisualizerState()
+
+// Restore visualizerState to its original hardcoded defaults, in place — mutates the
+// existing object/sub-objects rather than replacing them, since other modules
+// (canvasEngine, backgroundRenderer, etc.) hold direct references to
+// visualizerState.background / visualizerState.overlay.
+export function resetVisualizerStateToDefaults() {
+  const defaults = _createDefaultVisualizerState()
+  Object.assign(visualizerState, defaults)
+  Object.assign(visualizerState.background, defaults.background)
+  Object.assign(visualizerState.overlay, defaults.overlay)
 }

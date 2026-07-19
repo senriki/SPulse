@@ -11,7 +11,11 @@ export class VideoBackground {
     this._path  = null
   }
 
-  load(filePath) {
+  // onError is optional — called once if the video fails to load (missing file,
+  // unsupported codec, or corrupt data). Used by backgroundRenderer.reloadFromState()
+  // to surface a "not found" hint; the manual file-picker path doesn't need it since
+  // the user gets immediate visual feedback there (no thumbnail/preview appears).
+  load(filePath, onError) {
     // Clean up previous element
     if (this.el) {
       this.el.pause()
@@ -37,6 +41,7 @@ export class VideoBackground {
 
     video.addEventListener('error', e => {
       console.warn('Video background load error:', e)
+      onError?.()
     })
 
     video.load()

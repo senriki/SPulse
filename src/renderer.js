@@ -1,7 +1,7 @@
 import { AudioLoader }     from './audio/audioLoader.js'
 import { AudioAnalyser }   from './audio/audioAnalyser.js'
 import { canvasEngine }    from './visualizer/canvasEngine.js'
-import { visualizerState } from './visualizer/visualizerState.js'
+import { visualizerState, resetVisualizerStateToDefaults } from './visualizer/visualizerState.js'
 import { initLeftPanel }   from './controls/leftPanel.js'
 import { initPanelTabs }   from './controls/panelTabs.js'
 import { initStylePicker }      from './controls/stylePicker.js'
@@ -9,8 +9,8 @@ import { backgroundRenderer }   from './background/backgroundRenderer.js'
 import { textOverlay }          from './overlay/textOverlay.js'
 import { initOverlayControls }  from './controls/overlayControls.js'
 import { startExport }               from './export/exportPipeline.js'
-import { exportSettings }            from './export/exportSettings.js'
-import { serializeState, deserializeState } from './project/projectManager.js'
+import { exportSettings, resetExportSettingsToDefaults } from './export/exportSettings.js'
+import { serializeState, deserializeState, serializePortableState } from './project/projectManager.js'
 import { historyManager }                  from './history/historyManager.js'
 import { initErrorDialog }                 from './ui/errorDialog.js'
 import { initAboutScreen }                 from './ui/aboutScreen.js'
@@ -33,6 +33,16 @@ window.appState = appState   // expose for non-module script interop if needed
 // ─── Project state ────────────────────────────────────────────────────────────
 let _projectFilePath = null   // path of the currently open .spx file
 let _isDirty         = false  // true when state has changed since last save/load
+
+// ─── Auto-load last-used settings (global "last session", not per-project) ───
+// State only, applied here before anything below reads visualizerState/exportSettings.
+// The matching DOM sync (_syncDomFromState / backgroundRenderer.reloadFromState) runs
+// at the very end of this module instead of here, since it depends on module-level
+// `let` bindings (e.g. _detectedGpu) declared further down that aren't initialized yet
+// at this point in top-level evaluation. First launch (no last-session.json) leaves
+// visualizerState/exportSettings at their hardcoded defaults, unchanged.
+const _lastSession = await window.api.loadLastSession()
+if (_lastSession) await deserializeState(_lastSession)
 
 // ─── DOM refs ────────────────────────────────────────────────────────────────
 const dropZone     = document.getElementById('canvas-drop-zone')
@@ -106,6 +116,11 @@ async function loadAudio(arrayBuffer, filePath) {
     // Notify canvas engine (task-4 listens for this)
     window.dispatchEvent(new CustomEvent('audio-loaded', { detail: appState }))
     _setDirty()
+
+    // Clear a lingering "Audio not found" warning (see _applyProjectData) now that a
+    // file loaded successfully — this is the audio re-link flow completing.
+    const hint = document.getElementById('project-hint')
+    if (hint?.textContent.startsWith('Audio not found')) hint.textContent = 'Ctrl+S to save'
   } catch (err) {
     console.error('Audio decode failed:', err)
     _setDropMessage('✕ Could not decode file', false)
@@ -537,6 +552,17 @@ function _clearDirty() {
   _updateTitleBar()
 }
 
+// ─── Auto-save last-used settings (debounced, global "last session") ─────────
+// Independent of the .spx dirty/history tracking above — this persists a global
+// device-level snapshot on every settings change, not the user's explicit project file.
+let _autoSaveTimer = null
+function _scheduleAutoSaveLastSession() {
+  clearTimeout(_autoSaveTimer)
+  _autoSaveTimer = setTimeout(() => {
+    window.api.saveLastSession(serializeState())
+  }, 800)
+}
+
 function _updateTitleBar() {
   if (!_projectFilePath) { document.title = 'SPulse'; return }
   const name = _projectFilePath.replace(/.*[\\/]/, '').replace(/\.spx$/i, '')
@@ -657,19 +683,36 @@ async function _saveProject() {
   if (hint) { hint.textContent = 'Saved ✓'; setTimeout(() => { hint.textContent = 'Ctrl+S to save' }, 2000) }
 }
 
-// ─── Project: load ────────────────────────────────────────────────────────────
-async function _loadProject() {
-  const result = await window.api.loadProject()
-  if (!result) return   // user cancelled
+// ─── Project: export (portable — see Feature C, base64-embedded assets) ───────
+// Distinct from _saveProject(): does not touch _projectFilePath/dirty tracking, since
+// the exported file is a portable copy, not the user's currently-open project file.
+async function _exportProject() {
+  const defaultPath = appState.fileName
+    ? appState.fileName.replace(/\.[^.]+$/, '') + '.spx'
+    : 'project.spx'
+  const data      = await serializePortableState(appState.filePath || '')
+  const savedPath = await window.api.exportProject(data, defaultPath)
+  if (!savedPath) return   // user cancelled
+  const hint = document.getElementById('project-hint')
+  if (hint) { hint.textContent = 'Exported ✓'; setTimeout(() => { hint.textContent = 'Ctrl+S to save' }, 2000) }
+}
 
-  const { filePath: projectPath, data } = result
+// ─── Project: shared "apply loaded/imported .spx data" logic ──────────────────
+// Used by both _loadProject() (legacy manual load) and _importProject() (task-9,
+// portable v2.0 support) — deserializeState() already transparently branches on
+// `data.version`, so both formats flow through this one path.
+// deserializeState() must run BEFORE audio loading: for a portable (v2.0) file, the raw
+// `data.audioPath` is always '' (the real audio lives in `data.audioAsset`) — only
+// deserializeState()'s returned `audioPath` (resolved to a temp file) is usable. For a
+// legacy v1.0 file this ordering is a no-op change (deserializeState doesn't touch audio).
+async function _applyProjectData(projectPath, data) {
+  const { audioPath } = await deserializeState(data)
 
-  // Re-load the audio file stored in the project (no dialog)
-  if (data.audioPath) {
-    const audioResult = await window.api.loadAudioPath(data.audioPath)
+  if (audioPath) {
+    const audioResult = await window.api.loadAudioPath(audioPath)
     if (audioResult?.error) {
       const hint = document.getElementById('project-hint')
-      if (hint) hint.textContent = `Audio not found: ${data.audioPath.replace(/.*[\\/]/, '')}`
+      if (hint) hint.textContent = `Audio not found: ${audioPath.replace(/.*[\\/]/, '')}`
     } else if (audioResult) {
       const u8 = audioResult.buffer instanceof Uint8Array
         ? audioResult.buffer
@@ -679,9 +722,6 @@ async function _loadProject() {
     }
   }
 
-  // Restore all visualizer + export state (overrides anything loadAudio defaulted)
-  deserializeState(data)
-
   // Sync all DOM controls to the restored state
   _syncDomFromState(visualizerState, exportSettings)
 
@@ -690,8 +730,42 @@ async function _loadProject() {
 
   _projectFilePath = projectPath
   _clearDirty()
+}
+
+// ─── Project: load ────────────────────────────────────────────────────────────
+async function _loadProject() {
+  const result = await window.api.loadProject()
+  if (!result) return   // user cancelled
+  await _applyProjectData(result.filePath, result.data)
   const hint = document.getElementById('project-hint')
   if (hint) { hint.textContent = 'Project loaded ✓'; setTimeout(() => { hint.textContent = 'Ctrl+S to save' }, 2000) }
+}
+
+// ─── Project: import (portable — see Feature C, base64-embedded assets) ───────
+// Same underlying restore path as _loadProject(): deserializeState() transparently
+// handles both legacy v1.0 and portable v2.0 files, so this differs from Load only in
+// its dialog title and hint text (kept distinct for the same UX-clarity reason as
+// _exportProject() vs _saveProject()).
+async function _importProject() {
+  const result = await window.api.importProject()
+  if (!result) return   // user cancelled
+  await _applyProjectData(result.filePath, result.data)
+  const hint = document.getElementById('project-hint')
+  if (hint) { hint.textContent = 'Project imported ✓'; setTimeout(() => { hint.textContent = 'Ctrl+S to save' }, 2000) }
+}
+
+// ─── Project: reset visualizer/export settings to their hardcoded defaults ────
+// Also overwrites last-session.json immediately (not the debounced auto-save path)
+// so a relaunch right after reset doesn't restore the pre-reset state.
+function _resetToDefaults() {
+  resetVisualizerStateToDefaults()
+  resetExportSettingsToDefaults()
+  _syncDomFromState(visualizerState, exportSettings)
+  clearTimeout(_autoSaveTimer)
+  window.api.saveLastSession(serializeState())
+  _setDirty()
+  const hint = document.getElementById('project-hint')
+  if (hint) { hint.textContent = 'Reset to default ✓'; setTimeout(() => { hint.textContent = 'Ctrl+S to save' }, 2000) }
 }
 
 // ─── Register visualizer modes ────────────────────────────────────────────────
@@ -824,6 +898,9 @@ _initExportControls()
 // ─── Wire project buttons ─────────────────────────────────────────────────────
 document.getElementById('btn-save-project')?.addEventListener('click', _saveProject)
 document.getElementById('btn-load-project')?.addEventListener('click', _loadProject)
+document.getElementById('btn-export-project')?.addEventListener('click', _exportProject)
+document.getElementById('btn-import-project')?.addEventListener('click', _importProject)
+document.getElementById('btn-reset-defaults')?.addEventListener('click', _resetToDefaults)
 
 // ─── Track changes + history (capture = runs before target listener) ──────────
 const _capturePassive = { capture: true, passive: true }
@@ -836,6 +913,13 @@ document.getElementById('style-picker')?.addEventListener('click', _onPanelContr
 document.getElementById('right-panel')?.addEventListener('change', _setDirty, _capturePassive)
 document.getElementById('right-panel')?.addEventListener('input',  _setDirty, _capturePassive)
 
+// Auto-save last-used settings on any of the same control changes (debounced).
+document.getElementById('left-panel')?.addEventListener('change', _scheduleAutoSaveLastSession, _capturePassive)
+document.getElementById('left-panel')?.addEventListener('input',  _scheduleAutoSaveLastSession, _capturePassive)
+document.getElementById('style-picker')?.addEventListener('click', _scheduleAutoSaveLastSession, _capturePassive)
+document.getElementById('right-panel')?.addEventListener('change', _scheduleAutoSaveLastSession, _capturePassive)
+document.getElementById('right-panel')?.addEventListener('input',  _scheduleAutoSaveLastSession, _capturePassive)
+
 // ─── Wire left panel controls ─────────────────────────────────────────────────
 initLeftPanel(appState, visualizerState)
 
@@ -847,6 +931,8 @@ initPanelTabs(document.getElementById('right-panel'))
 window.api.onMenuOpenAudio?.(_openFilePicker)
 window.api.onMenuSaveProject?.(_saveProject)
 window.api.onMenuLoadProject?.(_loadProject)
+window.api.onMenuExportProject?.(_exportProject)
+window.api.onMenuImportProject?.(_importProject)
 window.api.onMenuUndo?.(_undo)
 window.api.onMenuRedo?.(_redo)
 
@@ -951,3 +1037,11 @@ window.api.detectGpuEncoders?.().then(info => {
     window.api.checkForUpdates?.()
   })
 }())
+
+// ─── Sync DOM + background assets to the auto-loaded session (if any) ────────
+// Runs last, after every control-wiring call above and after all module-level
+// `let`/`const` bindings are initialized (see the auto-load block near the top).
+if (_lastSession) {
+  _syncDomFromState(visualizerState, exportSettings)
+  backgroundRenderer.reloadFromState(visualizerState.background)
+}

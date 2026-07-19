@@ -6,6 +6,10 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.invoke('open-audio-file'),
   loadAudioPath: (filePath) =>
     ipcRenderer.invoke('load-audio-path', filePath),
+  readFileAsBase64: (filePath) =>
+    ipcRenderer.invoke('read-file-as-base64', filePath),
+  writeTempFile: (filename, data) =>
+    ipcRenderer.invoke('write-temp-file', { filename, data }),
 
   // Generic file picker (background images, videos)
   openFileDialog: (opts) =>
@@ -40,6 +44,16 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.invoke('save-project', { data, defaultPath }),
   loadProject: () =>
     ipcRenderer.invoke('load-project'),
+  exportProject: (data, defaultPath) =>
+    ipcRenderer.invoke('export-project', { data, defaultPath }),
+  importProject: () =>
+    ipcRenderer.invoke('import-project'),
+
+  // Auto-persisted last-used settings (no dialog)
+  saveLastSession: (data) =>
+    ipcRenderer.invoke('save-last-session', data),
+  loadLastSession: () =>
+    ipcRenderer.invoke('load-last-session'),
 
   // Main → Renderer events (export progress)
   onExportProgress: (cb) =>
@@ -59,6 +73,8 @@ contextBridge.exposeInMainWorld('api', {
   onMenuOpenAudio:   (cb) => ipcRenderer.on('menu-open-audio',     () => cb()),
   onMenuSaveProject: (cb) => ipcRenderer.on('menu-save-project',   () => cb()),
   onMenuLoadProject: (cb) => ipcRenderer.on('menu-load-project',   () => cb()),
+  onMenuExportProject: (cb) => ipcRenderer.on('menu-export-project', () => cb()),
+  onMenuImportProject: (cb) => ipcRenderer.on('menu-import-project', () => cb()),
   onMenuUndo:        (cb) => ipcRenderer.on('menu-undo',           () => cb()),
   onMenuRedo:        (cb) => ipcRenderer.on('menu-redo',           () => cb()),
   onMenuCheckUpdates:(cb) => ipcRenderer.on('menu-check-updates',  () => cb()),

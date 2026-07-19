@@ -16,6 +16,14 @@ function _toFileURL(filePath) {
   return normalized.startsWith('/') ? `file://${normalized}` : `file:///${normalized}`
 }
 
+// Mirrors the existing "Audio not found: {filename}" hint pattern (renderer.js) for
+// background image/video — persists until the user re-links via the file picker
+// (which overwrites this same label with the newly-chosen filename on selection).
+function _showAssetNotFound(labelId, kind, filePath) {
+  const label = document.getElementById(labelId)
+  if (label) label.textContent = `${kind} not found: ${filePath.replace(/.*[\\/]/, '')}`
+}
+
 function _drawImageThumb(img, canvasId) {
   const thumb = document.getElementById(canvasId)
   if (!thumb) return
@@ -84,7 +92,12 @@ class BackgroundRenderer {
     if (bgState?.type === 'video') this._videoBg.resumeAfterExport()
   }
 
-  // Reload image/video elements from stored paths (called after project load).
+  // Reload image/video elements from stored paths (called after project load/import).
+  // Covers both failure cases from the PRD: a legacy absolute path that no longer
+  // resolves on this machine, and a portable-import temp file that's missing/corrupt.
+  // Re-linking reuses the existing "Choose Image…"/"Choose Video…" pickers below —
+  // they already overwrite bgState.imagePath/videoPath and the name label on selection,
+  // which is exactly the recovery action needed; no separate re-link UI required.
   reloadFromState(bgState) {
     if (bgState.imagePath) {
       const img = new Image()
@@ -94,10 +107,15 @@ class BackgroundRenderer {
         _drawImageThumb(img, 'bg-image-thumb')
         _refreshCanvasIfIdle()
       }
-      img.onerror = () => console.warn('Could not reload background image:', bgState.imagePath)
+      img.onerror = () => {
+        console.warn('Could not reload background image:', bgState.imagePath)
+        _showAssetNotFound('bg-image-name', 'Image', bgState.imagePath)
+      }
     }
     if (bgState.videoPath) {
-      this._videoBg.load(bgState.videoPath)
+      this._videoBg.load(bgState.videoPath, () => {
+        _showAssetNotFound('bg-video-name', 'Video', bgState.videoPath)
+      })
       const vidEl = this._videoBg.el
       if (vidEl) _captureVideoThumb(vidEl, 'bg-video-thumb')
     }
