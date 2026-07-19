@@ -586,6 +586,13 @@ html, body {
   text-align: center;
 }
 
+.action-caption {
+  font-size: 10px;
+  color: var(--color-text-muted);
+  text-align: center;
+  margin-top: 3px;
+}
+
 /* ─── Export Progress Modal ──────────────────────────────────────────────────── */
 .modal-overlay {
   position: fixed;
