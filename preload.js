@@ -58,6 +58,7 @@ contextBridge.exposeInMainWorld('api', {
   onShowAbout:       (cb) => ipcRenderer.on('show-about',          () => cb()),
   onMenuOpenAudio:   (cb) => ipcRenderer.on('menu-open-audio',     () => cb()),
   onMenuSaveProject: (cb) => ipcRenderer.on('menu-save-project',   () => cb()),
+  onMenuLoadProject: (cb) => ipcRenderer.on('menu-load-project',   () => cb()),
   onMenuUndo:        (cb) => ipcRenderer.on('menu-undo',           () => cb()),
   onMenuRedo:        (cb) => ipcRenderer.on('menu-redo',           () => cb()),
   onMenuCheckUpdates:(cb) => ipcRenderer.on('menu-check-updates',  () => cb()),

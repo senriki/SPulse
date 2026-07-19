@@ -846,6 +846,7 @@ initPanelTabs(document.getElementById('right-panel'))
 // ─── Wire app menu → renderer actions ────────────────────────────────────────
 window.api.onMenuOpenAudio?.(_openFilePicker)
 window.api.onMenuSaveProject?.(_saveProject)
+window.api.onMenuLoadProject?.(_loadProject)
 window.api.onMenuUndo?.(_undo)
 window.api.onMenuRedo?.(_redo)
 

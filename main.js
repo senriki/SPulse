@@ -73,6 +73,7 @@ function createMenu() {
       submenu: [
         { label: 'Open Audio…', accelerator: 'CmdOrCtrl+O', click: () => _mainWin?.webContents.send('menu-open-audio') },
         { label: 'Save Project', accelerator: 'CmdOrCtrl+S', click: () => _mainWin?.webContents.send('menu-save-project') },
+        { label: 'Load Project…', click: () => _mainWin?.webContents.send('menu-load-project') },
         { type: 'separator' },
         isMac ? { role: 'close' } : { role: 'quit' }
       ]
