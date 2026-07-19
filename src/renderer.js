@@ -387,6 +387,7 @@ btnOpenAudio.addEventListener('click', _openFilePicker)
 document.addEventListener('keydown', e => {
   const ctrl = e.ctrlKey || e.metaKey
 
+  if (ctrl && e.key === 'n') { e.preventDefault(); _newSession() }
   if (ctrl && e.key === 'o') { e.preventDefault(); _openFilePicker() }
   if (ctrl && e.key === 's') { e.preventDefault(); _saveProject() }
   if (ctrl && e.key === 'e') { e.preventDefault(); if (appState.loaded) { _pauseForExport(); startExport() } }
@@ -769,6 +770,44 @@ function _resetToDefaults() {
   if (hint) { hint.textContent = 'Reset to default ✓'; setTimeout(() => { hint.textContent = 'Ctrl+S to save' }, 2000) }
 }
 
+// ─── Project: new session (unload audio + reset settings + clear project file) ─
+// A superset of _resetToDefaults(): also unloads whatever audio is currently loaded
+// and clears the open-project association, for a true "start from scratch" reset.
+function _newSession() {
+  if (_isDirty && !confirm('Discard unsaved changes and start a new session?')) return
+
+  // Unload audio: stop playback, clear appState, restore the empty drop-zone UI
+  _pauseForExport()
+  appState.loaded      = false
+  appState.filePath    = ''
+  appState.fileName    = ''
+  appState.audioLoader = null
+  appState.analyser    = null
+  audioInfoEmpty.classList.remove('hidden')
+  audioMeta.classList.add('hidden')
+  btnPlay.disabled        = true
+  btnExport.disabled      = true
+  exportHint.textContent  = 'Load an audio file to export'
+  timeCurrent.textContent = '0:00'
+  timeTotal.textContent   = '0:00'
+  scrubberFill.style.width = '0%'
+  scrubberThumb.style.left = '0%'
+  _resetDropMessage()
+  dropOverlay.classList.remove('hidden')
+
+  // Reset visualizer/export settings to defaults — reuses the existing Reset to
+  // Default flow (including its immediate last-session.json overwrite).
+  _resetToDefaults()
+
+  // Clear undo/redo history and the open-project association — this session isn't
+  // "attached" to any project file or prior edit history anymore.
+  historyManager.clear()
+  _projectFilePath = null
+  _clearDirty()
+  const hint = document.getElementById('project-hint')
+  if (hint) hint.textContent = 'New session ✓'
+}
+
 // ─── Register visualizer modes ────────────────────────────────────────────────
 canvasEngine.registerMode('bar_mirror',    drawBarMirror)
 canvasEngine.registerMode('line_smooth',   drawLineSmooth)
@@ -929,6 +968,7 @@ initPanelTabs(document.getElementById('left-panel'))
 initPanelTabs(document.getElementById('right-panel'))
 
 // ─── Wire app menu → renderer actions ────────────────────────────────────────
+window.api.onMenuNewSession?.(_newSession)
 window.api.onMenuOpenAudio?.(_openFilePicker)
 window.api.onMenuSaveProject?.(_saveProject)
 window.api.onMenuLoadProject?.(_loadProject)

@@ -71,6 +71,7 @@ contextBridge.exposeInMainWorld('api', {
   // Main → Renderer: app menu events & About screen
   onShowAbout:       (cb) => ipcRenderer.on('show-about',          () => cb()),
   onMenuOpenAudio:   (cb) => ipcRenderer.on('menu-open-audio',     () => cb()),
+  onMenuNewSession: (cb) => ipcRenderer.on('menu-new-session',     () => cb()),
   onMenuSaveProject: (cb) => ipcRenderer.on('menu-save-project',   () => cb()),
   onMenuLoadProject: (cb) => ipcRenderer.on('menu-load-project',   () => cb()),
   onMenuExportProject: (cb) => ipcRenderer.on('menu-export-project', () => cb()),

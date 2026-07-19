@@ -71,6 +71,8 @@ function createMenu() {
     {
       label: 'File',
       submenu: [
+        { label: 'New Session', accelerator: 'CmdOrCtrl+N', click: () => _mainWin?.webContents.send('menu-new-session') },
+        { type: 'separator' },
         { label: 'Open Audio…', accelerator: 'CmdOrCtrl+O', click: () => _mainWin?.webContents.send('menu-open-audio') },
         { label: 'Save Project', accelerator: 'CmdOrCtrl+S', click: () => _mainWin?.webContents.send('menu-save-project') },
         { label: 'Load Project…', click: () => _mainWin?.webContents.send('menu-load-project') },
