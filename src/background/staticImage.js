@@ -14,12 +14,12 @@ export function drawStaticImage(ctx, W, H, bgState) {
   const offX  = bgState.offsetX ?? 0
   const offY  = bgState.offsetY ?? 0
 
-  // Live preview always renders on a fixed 1280x720 canvas bitmap — the
-  // portrait/square "look" comes purely from the CSS wrapper stretching that
-  // bitmap to the selected resolution's aspect ratio (see canvasEngine._fitWrapper).
-  // Do all fit math against the actual target aspect and pre-compensate with
-  // ctx.scale() so the result is correctly proportioned after that stretch.
-  // During export W/H already equal the target size 1:1, so this is a no-op.
+  // Live preview renders on a canvas that always matches the selected resolution's
+  // aspect ratio, but is capped to PREVIEW_MAX_DIM on its longest side for performance
+  // (see canvasEngine._resizePreviewCanvas) — so W/H can be smaller than the real target
+  // resolution while sharing its exact aspect ratio. Do all fit math against the real
+  // target size, then uniformly scale down to actual canvas pixel space with ctx.scale().
+  // During export W/H already equal the target size 1:1, so this is a no-op there.
   const targetW = exportSettings.width  || W
   const targetH = exportSettings.height || H
 

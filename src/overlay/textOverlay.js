@@ -9,11 +9,10 @@ export const textOverlay = {
     const { title, artist, titleFont, artistFont, titleSize, artistSize, color, opacity, position, x, y } = overlayState
     if (!title && !artist) return
 
-    // Live preview always renders on a fixed 1280x720 canvas bitmap that gets
-    // CSS-stretched to the selected resolution's aspect ratio afterward (see
-    // staticImage.js for the full explanation). Position/size math needs to
-    // happen against the real target resolution, then get pre-compensated
-    // with ctx.scale() so text isn't stretched by that later CSS resize.
+    // Live preview renders on a canvas matching the target resolution's aspect ratio
+    // but possibly smaller (capped for performance — see staticImage.js for the full
+    // explanation). Position/size math needs to happen against the real target
+    // resolution, then get scaled down uniformly to actual canvas pixel space.
     const targetW = exportSettings.width  || W
     const targetH = exportSettings.height || H
 

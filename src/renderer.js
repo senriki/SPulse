@@ -273,8 +273,9 @@ canvasWrapper?.addEventListener('mousedown', e => {
 document.addEventListener('mousemove', e => {
   if (_bgDragging) {
     // Background offsets are interpreted in the target export resolution's
-    // space (see staticImage.js / videoBackground.js), not the raw 1280x720
-    // preview bitmap — convert the screen-pixel drag delta accordingly.
+    // space (see staticImage.js / videoBackground.js), not the preview canvas's
+    // own (possibly downscaled) pixel size — convert the screen-pixel drag delta
+    // accordingly.
     const cssW  = canvasWrapper.clientWidth
     const cssH  = canvasWrapper.clientHeight
     const logW  = exportSettings.width  || 1280

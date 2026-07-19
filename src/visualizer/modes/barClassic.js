@@ -1,7 +1,8 @@
 // bar_classic: vertical frequency bars, equalizer style (Canvas 2D fillRect)
 // freqData: Uint8Array[1024] from AnalyserNode.getByteFrequencyData (fftSize=2048)
 // state: visualizerState
-// W, H: canvas logical resolution (1280×720 in preview)
+// W, H: canvas logical resolution (matches target aspect ratio; the real export
+//       size during export, a scaled-down equivalent during preview)
 // timeData unused here — present to satisfy the shared draw fn signature
 export function drawBarClassic(ctx, freqData, timeData, state, W, H) {
   const { padding, barWidth, barGap, color, opacity, glow, centerVertically, yOffset, sensitivity = 1 } = state

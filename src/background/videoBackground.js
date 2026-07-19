@@ -61,9 +61,10 @@ export class VideoBackground {
     const offX  = bgState.offsetX ?? 0
     const offY  = bgState.offsetY ?? 0
 
-    // See staticImage.js for why this compensating scale is needed — preview
-    // always renders on a fixed 1280x720 bitmap regardless of the selected
-    // resolution, and gets CSS-stretched to the real aspect ratio afterward.
+    // See staticImage.js for why this scale is needed — preview renders on a
+    // canvas that matches the target resolution's aspect ratio but may be smaller
+    // (capped for performance), so fit math computed in real-target-size space
+    // needs a uniform scale down to actual canvas pixel space.
     const targetW = exportSettings.width  || W
     const targetH = exportSettings.height || H
 

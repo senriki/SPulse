@@ -7,6 +7,11 @@ const MODES = {
   bar_classic: drawBarClassic,
 }
 
+// Cap on the live preview canvas's longest side — keeps real-time rendering cheap
+// regardless of how large the actual export resolution is (export itself always
+// renders at the true target size via setExportResolution).
+const PREVIEW_MAX_DIM = 1280
+
 class CanvasEngine {
   constructor() {
     this.r2d     = null   // Renderer2D — set after audio loads
@@ -43,11 +48,28 @@ class CanvasEngine {
   // Switch the active visualizer mode (called by stylePicker + project load)
   setMode(modeId) { visualizerState.mode = modeId }
 
-  // Update CSS preview aspect ratio without changing canvas pixel size (task-10)
+  // Update the preview to match the chosen resolution's aspect ratio — resizes the
+  // canvas's actual pixel dimensions (not just the CSS wrapper), so shapes that depend
+  // on true width/height (e.g. radial_pulse's circle) render correctly proportioned
+  // instead of being non-uniformly stretched by CSS to fit a differently-shaped wrapper.
+  // Capped at PREVIEW_MAX_DIM so live rendering stays cheap regardless of how large the
+  // actual export resolution is — only export itself (setExportResolution) needs the
+  // real target pixel size.
   setPreviewAspect(w, h) {
     this._previewW = w
     this._previewH = h
+    this._resizePreviewCanvas(w, h)
     this._fitWrapper()
+  }
+
+  _resizePreviewCanvas(w, h) {
+    if (!this.r2d) return
+    const ratio  = w / h
+    const [cw, ch] = ratio >= 1
+      ? [PREVIEW_MAX_DIM, Math.round(PREVIEW_MAX_DIM / ratio)]
+      : [Math.round(PREVIEW_MAX_DIM * ratio), PREVIEW_MAX_DIM]
+    this.r2d.canvas.width  = cw
+    this.r2d.canvas.height = ch
   }
 
   // Re-fit the preview wrapper to the current canvas-area size — call after
@@ -77,9 +99,10 @@ class CanvasEngine {
   _onAudioLoaded(appState) {
     this._appState = appState
     const canvas = document.getElementById('waveform-canvas')
-    canvas.width  = 1280
-    canvas.height = 720
     this.r2d = new Renderer2D(canvas)
+    // Match whatever preview aspect was already selected (e.g. from a loaded project),
+    // defaulting to 16:9 if none has been set yet.
+    this._resizePreviewCanvas(this._previewW ?? 1280, this._previewH ?? 720)
     this._fpsEl = document.getElementById('fps-counter')
     this._fitWrapper()
     window.addEventListener('resize', () => this._fitWrapper())
@@ -185,8 +208,7 @@ class CanvasEngine {
 
   restorePreviewResolution() {
     if (!this.r2d) return
-    this.r2d.canvas.width  = 1280
-    this.r2d.canvas.height = 720
+    this._resizePreviewCanvas(this._previewW ?? 1280, this._previewH ?? 720)
     this._fitWrapper()
   }
 
