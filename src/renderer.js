@@ -167,6 +167,38 @@ function _pauseForExport() {
   _syncPlayIcon(false)
 }
 
+// Stop playback and release the current audio's AudioContext (loadAudio() creates a
+// fresh one via `new AudioLoader()` every time) before replacing it or clearing it
+// entirely — without this, loading a new project/audio file on top of an existing one
+// leaks one AudioContext per load rather than fully letting go of the previous audio.
+function _unloadAudio() {
+  if (appState.analyser?.isPlaying) appState.analyser.stop()
+  appState.audioLoader?.audioContext?.close().catch(() => {})
+  appState.loaded      = false
+  appState.filePath    = ''
+  appState.fileName    = ''
+  appState.audioLoader = null
+  appState.analyser    = null
+  canvasEngine.stop()
+  _syncPlayIcon(false)
+}
+
+// Reset the audio-related UI back to its "nothing loaded" state — call alongside
+// _unloadAudio() whenever there's no guarantee new audio will load right after.
+function _resetAudioUI() {
+  audioInfoEmpty.classList.remove('hidden')
+  audioMeta.classList.add('hidden')
+  btnPlay.disabled        = true
+  btnExport.disabled      = true
+  exportHint.textContent  = 'Load an audio file to export'
+  timeCurrent.textContent = '0:00'
+  timeTotal.textContent   = '0:00'
+  scrubberFill.style.width = '0%'
+  scrubberThumb.style.left = '0%'
+  _resetDropMessage()
+  dropOverlay.classList.remove('hidden')
+}
+
 function _onPlaybackEnded() {
   canvasEngine.stop()
   _syncPlayIcon(false)
@@ -708,6 +740,15 @@ async function _exportProject() {
 // deserializeState()'s returned `audioPath` (resolved to a temp file) is usable. For a
 // legacy v1.0 file this ordering is a no-op change (deserializeState doesn't touch audio).
 async function _applyProjectData(projectPath, data) {
+  // Start from a clean slate first — otherwise a field missing from `data` (e.g. an
+  // older-schema project file) would silently inherit whatever was live in memory from
+  // the previous session instead of falling back to a proper default, and any
+  // previously-loaded audio would keep playing/lingering if the new project has none.
+  _unloadAudio()
+  _resetAudioUI()
+  resetVisualizerStateToDefaults()
+  resetExportSettingsToDefaults()
+
   const { audioPath } = await deserializeState(data)
 
   if (audioPath) {
@@ -776,24 +817,8 @@ function _resetToDefaults() {
 function _newSession() {
   if (_isDirty && !confirm('Discard unsaved changes and start a new session?')) return
 
-  // Unload audio: stop playback, clear appState, restore the empty drop-zone UI
-  _pauseForExport()
-  appState.loaded      = false
-  appState.filePath    = ''
-  appState.fileName    = ''
-  appState.audioLoader = null
-  appState.analyser    = null
-  audioInfoEmpty.classList.remove('hidden')
-  audioMeta.classList.add('hidden')
-  btnPlay.disabled        = true
-  btnExport.disabled      = true
-  exportHint.textContent  = 'Load an audio file to export'
-  timeCurrent.textContent = '0:00'
-  timeTotal.textContent   = '0:00'
-  scrubberFill.style.width = '0%'
-  scrubberThumb.style.left = '0%'
-  _resetDropMessage()
-  dropOverlay.classList.remove('hidden')
+  _unloadAudio()
+  _resetAudioUI()
 
   // Reset visualizer/export settings to defaults — reuses the existing Reset to
   // Default flow (including its immediate last-session.json overwrite).
