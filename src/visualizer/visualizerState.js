@@ -77,8 +77,15 @@ export const visualizerState = _createDefaultVisualizerState()
 // (canvasEngine, backgroundRenderer, etc.) hold direct references to
 // visualizerState.background / visualizerState.overlay.
 export function resetVisualizerStateToDefaults() {
-  const defaults = _createDefaultVisualizerState()
-  Object.assign(visualizerState, defaults)
-  Object.assign(visualizerState.background, defaults.background)
-  Object.assign(visualizerState.overlay, defaults.overlay)
+  const { background: defaultBg, overlay: defaultOv, ...topLevelDefaults } = _createDefaultVisualizerState()
+  // Only assign top-level (primitive) fields here — background/overlay are excluded
+  // and merged into the EXISTING sub-objects below instead, so their identity never
+  // changes. overlayControls.js/backgroundRenderer.js were handed these exact object
+  // references once at startup (initOverlayControls(visualizerState.overlay) etc.); if
+  // Object.assign(visualizerState, defaults) were used directly, it would silently swap
+  // in new background/overlay objects and permanently disconnect those controls from
+  // whatever canvasEngine actually reads from then on.
+  Object.assign(visualizerState, topLevelDefaults)
+  Object.assign(visualizerState.background, defaultBg)
+  Object.assign(visualizerState.overlay, defaultOv)
 }
