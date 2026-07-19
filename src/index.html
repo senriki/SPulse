@@ -40,6 +40,14 @@
 
       <div class="panel-body">
 
+        <div class="tab-bar">
+          <button class="tab-btn active" data-tab="waveform">Waveform</button>
+          <button class="tab-btn" data-tab="motion">Motion</button>
+          <button class="tab-btn" data-tab="background">Background</button>
+        </div>
+
+        <div class="tab-panel" data-tab-group="waveform">
+
         <!-- Visualizer Style Picker -->
         <section class="panel-section">
           <h3 class="section-label">Visualizer Style</h3>
@@ -95,6 +103,83 @@
             </button>
           </div>
         </section>
+
+        <!-- Color Controls -->
+        <section class="panel-section">
+          <h3 class="section-label">Waveform Color</h3>
+          <div class="control-group">
+            <label class="control-label">Color</label>
+            <div class="color-row">
+              <input type="color" id="waveform-color" class="color-swatch" value="#00D4FF">
+              <input type="text" id="waveform-color-hex" class="hex-input" value="#00D4FF" maxlength="7" spellcheck="false">
+            </div>
+          </div>
+          <div class="control-group">
+            <label class="control-label">Opacity <span class="value-display" id="waveform-opacity-val">100%</span></label>
+            <input type="range" id="waveform-opacity" class="range-input" min="0" max="100" value="100">
+          </div>
+          <div class="control-group">
+            <label class="control-label">Glow <span class="value-display" id="waveform-glow-val">0%</span></label>
+            <input type="range" id="waveform-glow" class="range-input" min="0" max="100" value="0">
+          </div>
+        </section>
+
+        <!-- Size Controls -->
+        <section class="panel-section">
+          <h3 class="section-label">Size & Shape</h3>
+          <div class="control-group">
+            <label class="control-label">Bar Width <span class="value-display" id="bar-width-val">4px</span></label>
+            <input type="range" id="bar-width" class="range-input" min="1" max="32" value="4">
+          </div>
+          <div class="control-group">
+            <label class="control-label">Bar Gap <span class="value-display" id="bar-gap-val">1px</span></label>
+            <input type="range" id="bar-gap" class="range-input" min="0" max="16" value="1">
+          </div>
+          <div class="control-group">
+            <label class="control-label">Line Width <span class="value-display" id="line-width-val">2px</span></label>
+            <input type="range" id="line-width" class="range-input" min="1" max="12" value="2">
+          </div>
+          <div class="control-group">
+            <label class="control-label">Padding <span class="value-display" id="canvas-padding-val">16px</span></label>
+            <input type="range" id="canvas-padding" class="range-input" min="0" max="120" value="16">
+          </div>
+        </section>
+
+        </div>
+
+        <div class="tab-panel hidden" data-tab-group="motion">
+
+        <!-- Smoothing & Sensitivity -->
+        <section class="panel-section">
+          <h3 class="section-label">Reactivity</h3>
+          <div class="control-group">
+            <label class="control-label">Smoothing <span class="value-display" id="smoothing-val">80%</span></label>
+            <input type="range" id="smoothing" class="range-input" min="0" max="99" value="80">
+          </div>
+          <div class="control-group">
+            <label class="control-label">Sensitivity <span class="value-display" id="sensitivity-val">100%</span></label>
+            <input type="range" id="sensitivity" class="range-input" min="10" max="300" step="5" value="100">
+          </div>
+        </section>
+
+        <!-- Position -->
+        <section class="panel-section">
+          <h3 class="section-label">Position</h3>
+          <div class="control-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="waveform-center" checked>
+              Center vertically
+            </label>
+          </div>
+          <div class="control-group">
+            <label class="control-label">Y Offset <span class="value-display" id="y-offset-val">0px</span></label>
+            <input type="range" id="y-offset" class="range-input" min="-400" max="400" value="0">
+          </div>
+        </section>
+
+        </div>
+
+        <div class="tab-panel hidden" data-tab-group="background">
 
         <!-- Background -->
         <section class="panel-section">
@@ -179,74 +264,7 @@
           </div>
         </section>
 
-        <!-- Color Controls -->
-        <section class="panel-section">
-          <h3 class="section-label">Waveform Color</h3>
-          <div class="control-group">
-            <label class="control-label">Color</label>
-            <div class="color-row">
-              <input type="color" id="waveform-color" class="color-swatch" value="#00D4FF">
-              <input type="text" id="waveform-color-hex" class="hex-input" value="#00D4FF" maxlength="7" spellcheck="false">
-            </div>
-          </div>
-          <div class="control-group">
-            <label class="control-label">Opacity <span class="value-display" id="waveform-opacity-val">100%</span></label>
-            <input type="range" id="waveform-opacity" class="range-input" min="0" max="100" value="100">
-          </div>
-          <div class="control-group">
-            <label class="control-label">Glow <span class="value-display" id="waveform-glow-val">0%</span></label>
-            <input type="range" id="waveform-glow" class="range-input" min="0" max="100" value="0">
-          </div>
-        </section>
-
-        <!-- Size Controls -->
-        <section class="panel-section">
-          <h3 class="section-label">Size & Shape</h3>
-          <div class="control-group">
-            <label class="control-label">Bar Width <span class="value-display" id="bar-width-val">4px</span></label>
-            <input type="range" id="bar-width" class="range-input" min="1" max="32" value="4">
-          </div>
-          <div class="control-group">
-            <label class="control-label">Bar Gap <span class="value-display" id="bar-gap-val">1px</span></label>
-            <input type="range" id="bar-gap" class="range-input" min="0" max="16" value="1">
-          </div>
-          <div class="control-group">
-            <label class="control-label">Line Width <span class="value-display" id="line-width-val">2px</span></label>
-            <input type="range" id="line-width" class="range-input" min="1" max="12" value="2">
-          </div>
-          <div class="control-group">
-            <label class="control-label">Padding <span class="value-display" id="canvas-padding-val">16px</span></label>
-            <input type="range" id="canvas-padding" class="range-input" min="0" max="120" value="16">
-          </div>
-        </section>
-
-        <!-- Smoothing & Sensitivity -->
-        <section class="panel-section">
-          <h3 class="section-label">Reactivity</h3>
-          <div class="control-group">
-            <label class="control-label">Smoothing <span class="value-display" id="smoothing-val">80%</span></label>
-            <input type="range" id="smoothing" class="range-input" min="0" max="99" value="80">
-          </div>
-          <div class="control-group">
-            <label class="control-label">Sensitivity <span class="value-display" id="sensitivity-val">100%</span></label>
-            <input type="range" id="sensitivity" class="range-input" min="10" max="300" step="5" value="100">
-          </div>
-        </section>
-
-        <!-- Position -->
-        <section class="panel-section">
-          <h3 class="section-label">Position</h3>
-          <div class="control-group">
-            <label class="checkbox-label">
-              <input type="checkbox" id="waveform-center" checked>
-              Center vertically
-            </label>
-          </div>
-          <div class="control-group">
-            <label class="control-label">Y Offset <span class="value-display" id="y-offset-val">0px</span></label>
-            <input type="range" id="y-offset" class="range-input" min="-400" max="400" value="0">
-          </div>
-        </section>
+        </div>
 
       </div>
     </aside>
@@ -311,6 +329,13 @@
          ═══════════════════════════════════════ -->
     <aside class="panel right-panel" id="right-panel">
       <div class="panel-body">
+
+        <div class="tab-bar">
+          <button class="tab-btn active" data-tab="audio">Audio</button>
+          <button class="tab-btn" data-tab="export">Export</button>
+        </div>
+
+        <div class="tab-panel" data-tab-group="audio">
 
         <!-- Audio Info -->
         <section class="panel-section">
@@ -399,6 +424,10 @@
             </div>
           </div>
         </section>
+
+        </div>
+
+        <div class="tab-panel hidden" data-tab-group="export">
 
         <!-- Resolution -->
         <section class="panel-section">
@@ -489,6 +518,8 @@
           </div>
           <p class="export-hint mt-6" id="project-hint">Ctrl+S to save</p>
         </section>
+
+        </div>
 
         <!-- Export Action -->
         <div class="export-action">

@@ -3,6 +3,7 @@ import { AudioAnalyser }   from './audio/audioAnalyser.js'
 import { canvasEngine }    from './visualizer/canvasEngine.js'
 import { visualizerState } from './visualizer/visualizerState.js'
 import { initLeftPanel }   from './controls/leftPanel.js'
+import { initPanelTabs }   from './controls/panelTabs.js'
 import { initStylePicker }      from './controls/stylePicker.js'
 import { backgroundRenderer }   from './background/backgroundRenderer.js'
 import { textOverlay }          from './overlay/textOverlay.js'
@@ -837,6 +838,10 @@ document.getElementById('right-panel')?.addEventListener('input',  _setDirty, _c
 
 // ─── Wire left panel controls ─────────────────────────────────────────────────
 initLeftPanel(appState, visualizerState)
+
+// ─── Wire panel tab bars ──────────────────────────────────────────────────────
+initPanelTabs(document.getElementById('left-panel'))
+initPanelTabs(document.getElementById('right-panel'))
 
 // ─── Wire app menu → renderer actions ────────────────────────────────────────
 window.api.onMenuOpenAudio?.(_openFilePicker)
