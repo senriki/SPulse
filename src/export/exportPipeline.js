@@ -8,42 +8,13 @@ import { canvasEngine }     from '../visualizer/canvasEngine.js'
 import { exportSettings }   from './exportSettings.js'
 import { showErrorDialog }  from '../ui/errorDialog.js'
 import { visualizerState }  from '../visualizer/visualizerState.js'
+import { analyzeOffline }   from '../audio/offlineFrequencyAnalyser.js'
 
-// ─── Offline audio data for export frames ────────────────────────────────────
-// Derives time-domain (accurate) and pseudo-frequency data from the raw
-// AudioBuffer without requiring real-time AnalyserNode playback.
-// Real FFT per-frame analysis is a v1.1 enhancement.
-function getAudioDataAtTime(audioLoader, t) {
-  const { audioBuffer, amplitudeData } = audioLoader
-  const sampleRate  = audioBuffer.sampleRate
-  const startSample = Math.floor(t * sampleRate)
-  const binCount    = 1024
-  const nCh         = audioBuffer.numberOfChannels
-  const duration    = audioBuffer.duration
-
-  // Time-domain: actual samples → accurate for line_smooth / line_fill
-  const timeData = new Uint8Array(binCount).fill(128)
-  for (let i = 0; i < binCount; i++) {
-    let mono = 0
-    for (let c = 0; c < nCh; c++) mono += audioBuffer.getChannelData(c)[startSample + i] || 0
-    timeData[i] = Math.round(((mono / nCh) + 1) * 127.5)
-  }
-
-  // Frequency: amplitude-modulated spectral estimate (bass-heavy, like typical music)
-  const ovIdx = Math.min(
-    Math.floor((t / duration) * amplitudeData.length),
-    amplitudeData.length - 1
-  )
-  const amp = amplitudeData[ovIdx] || 0
-  const freqData = new Uint8Array(binCount)
-  for (let bin = 0; bin < binCount; bin++) {
-    const frac = bin / binCount
-    const decay  = Math.exp(-frac * 3.5)                                    // bass rolloff
-    const vari   = (Math.sin(bin * 7.3 + ovIdx * 0.13) + 1) / 2            // per-bin variation
-    freqData[bin] = Math.min(255, Math.round(amp * (0.35 * decay + 0.65 * vari * decay) * 280))
-  }
-  return { freqData, timeData }
-}
+// Silence fallback for any export frame whose real FFT data wasn't captured
+// (export cancelled mid-analysis, or a rendering edge case at the very end of
+// the track) — matches AnalyserNode.frequencyBinCount for fftSize=2048.
+const SILENT_FREQ = new Uint8Array(1024)
+const SILENT_TIME = new Uint8Array(1024).fill(128)
 
 // ─── Read export settings from exportSettings state ───────────────────────────
 function readExportSettings() {
@@ -144,8 +115,17 @@ export async function startExport() {
     // frame loop below can look up frames instead of seeking on every single one —
     // a background video loops many times over a full export, and seekTo() is far
     // too expensive to call once per exported frame. No-op for non-video backgrounds.
-    progressModal.setMessage('Preparing background video…')
-    await window.backgroundRenderer?.prepareVideoLoopForExport(visualizerState.background, fps, () => _cancelled)
+    // Run alongside the real per-frame FFT analysis below (independent resources —
+    // video element vs. audio graph) so neither adds to the other's prep time.
+    progressModal.setMessage('Preparing export…')
+    const [, audioFrames] = await Promise.all([
+      window.backgroundRenderer?.prepareVideoLoopForExport(visualizerState.background, fps, () => _cancelled),
+      // Real FFT per frame via OfflineAudioContext — matches what the live
+      // AnalyserNode produces during preview (same fftSize/smoothing), unlike the
+      // old synthetic amplitude-modulated approximation this replaced, which
+      // consistently produced much shorter bars in export than in preview.
+      analyzeOffline(audioLoader.audioBuffer, fps, visualizerState.smoothing / 100, () => _cancelled),
+    ])
     // Prep above can take several seconds on its own — reset the timer here so the
     // fps/ETA readout reflects only the per-frame loop below, not diluted by prep time.
     progressModal.resetTimer()
@@ -156,7 +136,7 @@ export async function startExport() {
       if (_cancelled) break
 
       const t = frame / fps
-      const { freqData, timeData } = getAudioDataAtTime(audioLoader, t)
+      const { freqData, timeData } = audioFrames[frame] || { freqData: SILENT_FREQ, timeData: SILENT_TIME }
       canvasEngine.setExportData(freqData, timeData)
       // Try the pre-decoded loop cache first (cheap lookup); fall back to an
       // explicit seek only if it wasn't available for this position.
