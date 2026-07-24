@@ -36,6 +36,13 @@ module.exports = {
       }
     ],
     category: 'AudioVideo',
+    // Only reaches launches that go through a generated .desktop Exec= entry —
+    // does not apply when the AppImage is run directly (double-click or bare
+    // ./AppImage), which is why it alone didn't fix the Ubuntu 23.10+ sandbox
+    // crash. The actual fix is the platform-gated
+    // app.commandLine.appendSwitch('no-sandbox') in main.js, which covers every
+    // launch path. Left here as a harmless no-op-if-unused fallback for the
+    // .desktop path.
     executableArgs: ['--no-sandbox']
   },
   nsis: {

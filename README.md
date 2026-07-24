@@ -98,6 +98,32 @@ Windows Defender's **Ransomware protection → Controlled folder access** blocks
 1. Choose an output folder outside the protected list (e.g. a subfolder you created in `C:\Users\<you>\Videos`)
 2. Or whitelist SPulse: **Windows Security → Virus & threat protection → Ransomware protection → Allow an app through Controlled folder access → Add SPulse**
 
+### Linux: AppImage crashes on launch (Ubuntu 23.10+/24.04)
+
+Older SPulse builds can crash immediately with:
+
+```
+FATAL:setuid_sandbox_host.cc(158)] The SUID sandbox helper binary was found, but is not configured correctly.
+```
+
+This happens because Ubuntu 23.10+ restricts unprivileged user namespaces via AppArmor by default, which conflicts with Electron's SUID sandbox. Current releases work around this automatically. If you're on an older build and hit this crash, run the AppImage with:
+
+```bash
+./SPulse-latest-linux.AppImage --no-sandbox
+```
+
+or update to the latest release.
+
+### Linux: AppImage doesn't launch on double-click
+
+AppImages need the executable bit set, which most file managers and browsers don't set automatically on downloaded files. Either run once from a terminal:
+
+```bash
+chmod +x SPulse-latest-linux.AppImage
+```
+
+or right-click the file → **Properties → Permissions → Allow executing file as program** (wording varies by desktop environment) — then double-click normally.
+
 ---
 
 ## Packaging

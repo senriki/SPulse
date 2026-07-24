@@ -8,6 +8,17 @@ const { FrameWriter }       = require('./src/export/frameWriter')
 const { detectGpuEncoders } = require('./src/export/gpuDetect')
 const { autoUpdater }       = require('electron-updater')
 
+// Ubuntu 23.10+ restricts unprivileged user namespaces via AppArmor by default,
+// which breaks Electron's SUID sandbox and crashes the AppImage on launch
+// (FATAL:setuid_sandbox_host.cc) unless --no-sandbox is passed manually. Setting
+// it here covers every launch path (double-click, terminal, .desktop entry)
+// instead of relying on electron-builder's executableArgs, which only reaches
+// a subset of those paths. Must run before app.whenReady() — Electron only
+// honors command-line switches appended prior to the ready event.
+if (process.platform === 'linux') {
+  app.commandLine.appendSwitch('no-sandbox')
+}
+
 let _mainWin = null
 
 // ─── Auto-updater ─────────────────────────────────────────────────────────────
