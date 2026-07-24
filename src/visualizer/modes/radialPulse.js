@@ -1,10 +1,17 @@
+import { exportSettings } from '../../export/exportSettings.js'
+
 // radial_pulse: circular frequency waveform radiating from center using polar coords
 export function drawRadialPulse(ctx, freqData, timeData, state, W, H) {
   const { padding, lineWidth, color, opacity, glow, yOffset, sensitivity = 1 } = state
 
-  const cx = W / 2
-  const cy = H / 2 + yOffset
-  const dim = Math.min(W, H)
+  // See barClassic.js — layout in real target-resolution space, scaled down to
+  // actual canvas pixel space, so preview matches export regardless of canvas size.
+  const targetW = exportSettings.width  || W
+  const targetH = exportSettings.height || H
+
+  const cx = targetW / 2
+  const cy = targetH / 2 + yOffset
+  const dim = Math.min(targetW, targetH)
   const baseR = dim * 0.12
   const maxR  = dim * 0.38 - padding
 
@@ -12,6 +19,7 @@ export function drawRadialPulse(ctx, freqData, timeData, state, W, H) {
   const glowBlur   = (glow / 100) * 40
 
   ctx.save()
+  ctx.scale(W / targetW, H / targetH)
   ctx.globalAlpha = opacity
   if (glowBlur > 0) { ctx.shadowColor = color; ctx.shadowBlur = glowBlur }
 

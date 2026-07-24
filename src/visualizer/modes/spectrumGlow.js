@@ -1,15 +1,23 @@
+import { exportSettings } from '../../export/exportSettings.js'
+
 // spectrum_glow: bars with frequency-mapped color gradient (bass=warm, treble=cool) + bloom
 export function drawSpectrumGlow(ctx, freqData, timeData, state, W, H) {
   const { padding, barWidth, barGap, opacity, glow, centerVertically, yOffset, sensitivity = 1 } = state
 
+  // See barClassic.js — layout in real target-resolution space, scaled down to
+  // actual canvas pixel space, so preview matches export regardless of canvas size.
+  const targetW = exportSettings.width  || W
+  const targetH = exportSettings.height || H
+
   const step       = barWidth + barGap
-  const numBars    = Math.max(1, Math.floor((W - padding * 2) / step))
-  const baseline   = centerVertically ? H / 2 + yOffset : H - padding + yOffset
-  const maxBarH    = centerVertically ? H / 2 - padding : H - padding * 2
+  const numBars    = Math.max(1, Math.floor((targetW - padding * 2) / step))
+  const baseline   = centerVertically ? targetH / 2 + yOffset : targetH - padding + yOffset
+  const maxBarH    = centerVertically ? targetH / 2 - padding : targetH - padding * 2
   const usableBins = Math.floor(freqData.length * 0.75)
   const glowBase   = (glow / 100) * 35
 
   ctx.save()
+  ctx.scale(W / targetW, H / targetH)
   ctx.globalAlpha = opacity
 
   for (let i = 0; i < numBars; i++) {

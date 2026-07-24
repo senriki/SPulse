@@ -1,16 +1,23 @@
+import { exportSettings } from '../../export/exportSettings.js'
+
 // line_smooth: amplitude drawn as a smooth bezier curve using time-domain data
 // Uses getByteTimeDomainData (0–255, 128 = silence) downsampled to 256 pts for perf.
 export function drawLineSmooth(ctx, freqData, timeData, state, W, H) {
   const { padding, lineWidth, color, opacity, glow, centerVertically, yOffset, sensitivity = 1 } = state
 
-  const centerY   = centerVertically ? H / 2 + yOffset : H * 0.65 + yOffset
-  const amplitude = (centerVertically ? H / 2 : H * 0.3) - padding
+  // See barClassic.js — layout in real target-resolution space, scaled down to
+  // actual canvas pixel space, so preview matches export regardless of canvas size.
+  const targetW = exportSettings.width  || W
+  const targetH = exportSettings.height || H
+
+  const centerY   = centerVertically ? targetH / 2 + yOffset : targetH * 0.65 + yOffset
+  const amplitude = (centerVertically ? targetH / 2 : targetH * 0.3) - padding
 
   // Downsample timeData to 256 points
   const numPts  = 256
   const srcLen  = timeData.length
   const pts     = new Array(numPts)
-  const usableW = W - padding * 2
+  const usableW = targetW - padding * 2
 
   for (let i = 0; i < numPts; i++) {
     const srcIdx = Math.floor((i / numPts) * srcLen)
@@ -22,6 +29,7 @@ export function drawLineSmooth(ctx, freqData, timeData, state, W, H) {
   }
 
   ctx.save()
+  ctx.scale(W / targetW, H / targetH)
   ctx.globalAlpha = opacity
   ctx.strokeStyle = color
   ctx.lineWidth   = lineWidth

@@ -1,14 +1,22 @@
+import { exportSettings } from '../../export/exportSettings.js'
+
 // bar_mirror: Classic bars reflected symmetrically above AND below the center axis
 export function drawBarMirror(ctx, freqData, timeData, state, W, H) {
   const { padding, barWidth, barGap, color, opacity, glow, yOffset, sensitivity = 1 } = state
 
+  // See barClassic.js — layout in real target-resolution space, scaled down to
+  // actual canvas pixel space, so preview matches export regardless of canvas size.
+  const targetW = exportSettings.width  || W
+  const targetH = exportSettings.height || H
+
   const step    = barWidth + barGap
-  const numBars = Math.max(1, Math.floor((W - padding * 2) / step))
-  const centerY = H / 2 + yOffset
-  const maxHalf = H / 2 - padding
+  const numBars = Math.max(1, Math.floor((targetW - padding * 2) / step))
+  const centerY = targetH / 2 + yOffset
+  const maxHalf = targetH / 2 - padding
   const usableBins = Math.floor(freqData.length * 0.75)
 
   ctx.save()
+  ctx.scale(W / targetW, H / targetH)
   ctx.globalAlpha = opacity
   ctx.fillStyle   = color
   if (glow > 0) { ctx.shadowColor = color; ctx.shadowBlur = (glow / 100) * 30 }

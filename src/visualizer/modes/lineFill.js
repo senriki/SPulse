@@ -1,13 +1,20 @@
+import { exportSettings } from '../../export/exportSettings.js'
+
 // line_fill: smooth amplitude line with filled area beneath — like a waveform editor
 export function drawLineFill(ctx, freqData, timeData, state, W, H) {
   const { padding, lineWidth, color, opacity, glow, centerVertically, yOffset, sensitivity = 1 } = state
 
-  const centerY   = centerVertically ? H / 2 + yOffset : H * 0.65 + yOffset
-  const amplitude = (centerVertically ? H / 2 : H * 0.3) - padding
+  // See barClassic.js — layout in real target-resolution space, scaled down to
+  // actual canvas pixel space, so preview matches export regardless of canvas size.
+  const targetW = exportSettings.width  || W
+  const targetH = exportSettings.height || H
+
+  const centerY   = centerVertically ? targetH / 2 + yOffset : targetH * 0.65 + yOffset
+  const amplitude = (centerVertically ? targetH / 2 : targetH * 0.3) - padding
 
   const numPts  = 256
   const srcLen  = timeData.length
-  const usableW = W - padding * 2
+  const usableW = targetW - padding * 2
   const pts     = new Array(numPts)
 
   for (let i = 0; i < numPts; i++) {
@@ -20,6 +27,7 @@ export function drawLineFill(ctx, freqData, timeData, state, W, H) {
   }
 
   ctx.save()
+  ctx.scale(W / targetW, H / targetH)
   if (glow > 0) { ctx.shadowColor = color; ctx.shadowBlur = (glow / 100) * 30 }
 
   // Build the curve path (reused for both fill and stroke)
