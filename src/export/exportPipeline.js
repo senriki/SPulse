@@ -140,6 +140,17 @@ export async function startExport() {
     // videoBackground.js). Position is driven explicitly per frame below instead.
     window.backgroundRenderer?.prepareVideoForExport(visualizerState.background)
 
+    // Pre-decode one pass through a looping video background's own duration so the
+    // frame loop below can look up frames instead of seeking on every single one —
+    // a background video loops many times over a full export, and seekTo() is far
+    // too expensive to call once per exported frame. No-op for non-video backgrounds.
+    progressModal.setMessage('Preparing background video…')
+    await window.backgroundRenderer?.prepareVideoLoopForExport(visualizerState.background, fps, () => _cancelled)
+    // Prep above can take several seconds on its own — reset the timer here so the
+    // fps/ETA readout reflects only the per-frame loop below, not diluted by prep time.
+    progressModal.resetTimer()
+    progressModal.update(0, totalFrames)
+
     // ── Frame render loop ─────────────────────────────────────────────────────
     for (let frame = 0; frame < totalFrames; frame++) {
       if (_cancelled) break
@@ -147,9 +158,10 @@ export async function startExport() {
       const t = frame / fps
       const { freqData, timeData } = getAudioDataAtTime(audioLoader, t)
       canvasEngine.setExportData(freqData, timeData)
-      // No-op unless the active background is a video — keeps it positioned to this
-      // frame's timeline instead of wherever real-time autoplay would have left it.
-      await window.backgroundRenderer?.seekVideoTo(visualizerState.background, t)
+      // Try the pre-decoded loop cache first (cheap lookup); fall back to an
+      // explicit seek only if it wasn't available for this position.
+      const usedCache = await window.backgroundRenderer?.selectExportFrame(visualizerState.background, t)
+      if (!usedCache) await window.backgroundRenderer?.seekVideoTo(visualizerState.background, t)
       canvasEngine.renderSyncFrame()
 
       // JPEG is much faster to encode than PNG; quality 0.92 is indistinguishable at target bitrate

@@ -159,6 +159,15 @@ class CanvasEngine {
     }
 
     // ── Background ─────────────────────────────────────────────────────────
+    // Always start from a known-clean, fully-opaque base before handing off to
+    // the background renderer. Some background paths (e.g. video, mid native
+    // loop-restart) can transiently skip painting a frame — without this, the
+    // waveform/overlay below would get drawn a second time on top of whatever
+    // was already fully composited on the canvas from the previous frame,
+    // producing a visible brightness/opacity spike.
+    ctx.fillStyle = visualizerState.background.color || '#0D1117'
+    ctx.fillRect(0, 0, W, H)
+
     // Task-7 replaces this branch with the full background renderer
     if (window.backgroundRenderer) {
       window.backgroundRenderer.draw(ctx, W, H, visualizerState.background)

@@ -88,8 +88,25 @@ class BackgroundRenderer {
     if (bgState?.type === 'video') this._videoBg.pauseForExport()
   }
 
+  // Pre-decode one pass through the background video's loop so the per-frame
+  // export loop can look up frames instead of seeking on every single one.
+  // No-op (and no-op-safe to call unconditionally) for non-video backgrounds.
+  async prepareVideoLoopForExport(bgState, fps, shouldAbort) {
+    if (bgState?.type === 'video') await this._videoBg.prepareExportLoopCache(fps, shouldAbort)
+  }
+
+  // Try the pre-decoded loop cache for timeline position `t`. Returns true if it
+  // was used (draw() will use the cached frame); false means the caller should
+  // fall back to seekVideoTo(bgState, t) for this frame.
+  async selectExportFrame(bgState, t) {
+    return bgState?.type === 'video' && await this._videoBg.selectExportFrame(t)
+  }
+
   resumeVideoAfterExport(bgState) {
-    if (bgState?.type === 'video') this._videoBg.resumeAfterExport()
+    if (bgState?.type === 'video') {
+      this._videoBg.clearExportLoopCache()
+      this._videoBg.resumeAfterExport()
+    }
   }
 
   // Reload image/video elements from stored paths (called after project load/import).

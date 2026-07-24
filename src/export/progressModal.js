@@ -54,6 +54,14 @@ export const progressModal = {
     }
   },
 
+  // Restart the fps/ETA clock without touching the rest of the modal state — used
+  // when a multi-second setup phase (e.g. export's video-loop pre-cache) happens
+  // between show() and the actual per-frame loop, so that phase's time doesn't
+  // dilute the reported rate.
+  resetTimer() {
+    this._startTs = performance.now()
+  },
+
   setMessage(msg) {
     if (this._stats) this._stats.textContent = msg
     if (this._eta)   this._eta.textContent   = ''
