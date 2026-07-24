@@ -290,14 +290,17 @@ function _encoderQualityArgs(encoder, bitrate, isH265) {
   return ['-crf', crf, '-preset', 'medium']
 }
 
-function _buildFFmpegArgs(config, mode, frameDir) {
+function _buildFFmpegArgs(config, mode, frameSource) {
   const { width, height, fps, codec, audioMode, bitrate, audioPath, outputPath, encoder: userEncoder } = config
   const args = []
 
   if (mode === 'pipe') {
     args.push('-f', 'image2pipe', '-framerate', String(fps), '-vcodec', 'mjpeg', '-i', 'pipe:0')
   } else {
-    args.push('-framerate', String(fps), '-i', path.join(frameDir, 'frame%08d.jpg'))
+    // Disk mode also feeds a raw concatenated-MJPEG stream — same format as pipe
+    // mode above, just read from a file (frameSource = FrameWriter's .mjpeg path)
+    // instead of stdin. See frameWriter.js for why this replaced one-file-per-frame.
+    args.push('-f', 'image2pipe', '-framerate', String(fps), '-vcodec', 'mjpeg', '-i', frameSource)
   }
 
   // Audio input
@@ -482,7 +485,7 @@ ipcMain.handle('export-done', async (event) => {
   if (_session.frameWriter) {
     // Disk mode: spawn FFmpeg on the collected frame sequence
     const { config, frameWriter } = _session
-    const args = _buildFFmpegArgs(config, 'disk', frameWriter.directory)
+    const args = _buildFFmpegArgs(config, 'disk', frameWriter.filePath)
 
     return new Promise(resolve => {
       const proc    = spawn(ffmpegBin, args)
