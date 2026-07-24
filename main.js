@@ -438,6 +438,8 @@ ipcMain.handle('export-video', async (event, config) => {
 })
 
 // export-frame: receive one rendered frame from renderer
+// frameData arrives as a raw ArrayBuffer (structured-cloned over IPC) — no base64
+// encode/decode round trip needed, unlike the old data-URL-string approach.
 ipcMain.handle('export-frame', async (event, { frameData, frameIndex }) => {
   if (!_session) return { ok: false }
 
@@ -446,14 +448,14 @@ ipcMain.handle('export-frame', async (event, { frameData, frameIndex }) => {
     ? Math.round((_session.framesReceived / _session.totalFrames) * 100)
     : 0
 
+  const buf = Buffer.from(frameData)
+
   if (_session.frameWriter) {
     // Disk path: write to temp file
-    _session.frameWriter.writeFrame(frameData)
+    _session.frameWriter.writeFrame(buf)
   } else if (_session.proc) {
-    // Pipe path: write decoded JPEG buffer to FFmpeg stdin
-    const base64 = frameData.replace(/^data:image\/\w+;base64,/, '')
-    const buf    = Buffer.from(base64, 'base64')
-    const ok     = _session.proc.stdin.write(buf)
+    // Pipe path: write JPEG buffer to FFmpeg stdin
+    const ok = _session.proc.stdin.write(buf)
     // Respect backpressure — wait for drain if buffer is full
     if (!ok) await new Promise(res => _session.proc.stdin.once('drain', res))
   }

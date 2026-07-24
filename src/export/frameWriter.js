@@ -20,11 +20,9 @@ class FrameWriter {
     return this.dir
   }
 
-  // Write one frame (base64 JPEG/PNG data URL) to disk
-  writeFrame(dataURL) {
+  // Write one frame (raw JPEG/PNG bytes, already a Buffer — see main.js export-frame) to disk
+  writeFrame(buf) {
     if (!this.dir) throw new Error('FrameWriter not initialized')
-    const base64  = dataURL.replace(/^data:image\/\w+;base64,/, '')
-    const buf     = Buffer.from(base64, 'base64')
     const outPath = path.join(this.dir, `frame${String(this.count).padStart(8, '0')}.jpg`)
     fs.writeFileSync(outPath, buf)
     this.count++

@@ -164,9 +164,11 @@ export async function startExport() {
       if (!usedCache) await window.backgroundRenderer?.seekVideoTo(visualizerState.background, t)
       canvasEngine.renderSyncFrame()
 
-      // JPEG is much faster to encode than PNG; quality 0.92 is indistinguishable at target bitrate
-      const dataURL = canvasEngine.r2d.toDataURL('image/jpeg', 0.92)
-      await window.api.exportFrame(dataURL, frame)
+      // JPEG is much faster to encode than PNG; quality 0.92 is indistinguishable at target bitrate.
+      // ArrayBuffer instead of a base64 dataURL — avoids the ~33% size bloat and the
+      // extra encode/decode pass base64 costs on both sides of the IPC call.
+      const buffer = await canvasEngine.r2d.toArrayBuffer('image/jpeg', 0.92)
+      await window.api.exportFrame(buffer, frame)
       progressModal.update(frame + 1, totalFrames)
     }
 

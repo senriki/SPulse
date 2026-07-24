@@ -2,14 +2,14 @@
 export class Renderer2D {
   constructor(canvas) {
     this.canvas = canvas
-    // willReadFrequently: export (pipe mode) calls getImageData() once per frame.
-    // Without this hint, Chromium keeps the canvas GPU-accelerated and getImageData
-    // forces a synchronous GPU->CPU framebuffer readback on every call — slow enough
-    // to starve the hardware video encoder of frames all over again, just via a
-    // different bottleneck than the JPEG round trip this was meant to fix. This hint
-    // makes Chromium back the canvas with a software rasterizer instead, so reads are
-    // cheap; drawing simple 2D waveform shapes in software is not a meaningful cost.
-    this.ctx    = canvas.getContext('2d', { willReadFrequently: true })
+    // No willReadFrequently hint (removed — was forcing a software rasterizer for
+    // the whole canvas, which meant every draw call, not just pixel reads, ran on
+    // CPU). Export no longer calls getImageData()/toDataURL() — it uses
+    // canvas.toBlob() (see toArrayBuffer() below), which Chromium already encodes
+    // off the main thread, so the synchronous-readback problem this hint used to
+    // guard against doesn't apply to the current export path. Letting the canvas
+    // stay GPU-accelerated speeds up drawing itself (glow/shadowBlur in particular).
+    this.ctx    = canvas.getContext('2d')
   }
 
   get width()  { return this.canvas.width }
@@ -41,5 +41,17 @@ export class Renderer2D {
 
   toBlob(cb, type = 'image/png', quality) {
     this.canvas.toBlob(cb, type, quality)
+  }
+
+  // Export pipeline uses this instead of toDataURL() — skips the ~33% size bloat
+  // and extra encode/decode pass that base64 round-tripping through IPC costs,
+  // since ArrayBuffer is structured-clonable across contextBridge as-is.
+  toArrayBuffer(type = 'image/png', quality) {
+    return new Promise((resolve, reject) => {
+      this.canvas.toBlob(blob => {
+        if (!blob) { reject(new Error('canvas.toBlob() returned null')); return }
+        blob.arrayBuffer().then(resolve, reject)
+      }, type, quality)
+    })
   }
 }
