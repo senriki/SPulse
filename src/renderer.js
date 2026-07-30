@@ -5,6 +5,7 @@ import { visualizerState, resetVisualizerStateToDefaults } from './visualizer/vi
 import { initLeftPanel }   from './controls/leftPanel.js'
 import { initPanelTabs }   from './controls/panelTabs.js'
 import { initStylePicker }      from './controls/stylePicker.js'
+import { updateBarWidthVisibility } from './controls/leftPanel.js'
 import { backgroundRenderer }   from './background/backgroundRenderer.js'
 import { textOverlay }          from './overlay/textOverlay.js'
 import { initOverlayControls }  from './controls/overlayControls.js'
@@ -538,10 +539,14 @@ function _snapshotVS() { return historyManager.snapshot(visualizerState) }
 function _applySnapshot(snap) {
   Object.assign(visualizerState, {
     mode: snap.mode, color: snap.color, opacity: snap.opacity, glow: snap.glow,
-    barWidth: snap.barWidth, barGap: snap.barGap, lineWidth: snap.lineWidth,
+    barWidth: snap.barWidth, barGap: snap.barGap, numBars: snap.numBars, mirrorLR: snap.mirrorLR,
+    mirrorPeakCenter: snap.mirrorPeakCenter, lineWidth: snap.lineWidth,
     padding: snap.padding, smoothing: snap.smoothing,
     sensitivity: snap.sensitivity ?? 1.0,
     centerVertically: snap.centerVertically, yOffset: snap.yOffset,
+    channelMode: snap.channelMode, stereoLayout: snap.stereoLayout,
+    independentChannelColors: snap.independentChannelColors,
+    colorL: snap.colorL, colorR: snap.colorR,
   })
   Object.assign(visualizerState.background, snap.background)
   visualizerState.background.imageEl = null
@@ -615,6 +620,7 @@ function _syncDomFromState(vs, es) {
     btn.classList.toggle('active', btn.dataset.mode === vs.mode)
   })
   canvasEngine.setMode(vs.mode)
+  updateBarWidthVisibility(vs.mode)
 
   // Waveform color + hex
   set('waveform-color', vs.color)
@@ -626,6 +632,19 @@ function _syncDomFromState(vs, es) {
   set('waveform-glow', vs.glow); txt('waveform-glow-val', `${vs.glow}%`)
   set('bar-width', vs.barWidth); txt('bar-width-val', `${vs.barWidth}px`)
   set('bar-gap', vs.barGap); txt('bar-gap-val', `${vs.barGap}px`)
+  set('bar-count', vs.numBars); txt('bar-count-val', `${vs.numBars}`)
+  chk('mirror-lr', vs.mirrorLR)
+  chk('mirror-peak-center', vs.mirrorPeakCenter)
+  $('mirror-peak-center-group')?.classList.toggle('hidden', !vs.mirrorLR)
+
+  // Channel Mode (Stereo)
+  document.querySelectorAll('[name="channel-mode"]').forEach(r => { r.checked = r.value === vs.channelMode })
+  $('stereo-controls')?.classList.toggle('hidden', vs.channelMode !== 'stereo')
+  set('stereo-layout', vs.stereoLayout)
+  chk('independent-channel-colors', vs.independentChannelColors)
+  $('channel-color-controls')?.classList.toggle('hidden', !vs.independentChannelColors)
+  set('waveform-color-l', vs.colorL)
+  set('waveform-color-r', vs.colorR)
   set('line-width', vs.lineWidth); txt('line-width-val', `${vs.lineWidth}px`)
   set('canvas-padding', vs.padding); txt('canvas-padding-val', `${vs.padding}px`)
   set('smoothing', vs.smoothing); txt('smoothing-val', `${vs.smoothing}%`)
@@ -997,6 +1016,7 @@ initPanelTabs(document.getElementById('right-panel'))
 
 // ─── Wire app menu → renderer actions ────────────────────────────────────────
 window.api.onMenuNewSession?.(_newSession)
+window.api.onMenuResetSettings?.(_resetToDefaults)
 window.api.onMenuOpenAudio?.(_openFilePicker)
 window.api.onMenuSaveProject?.(_saveProject)
 window.api.onMenuLoadProject?.(_loadProject)

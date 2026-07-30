@@ -31,6 +31,9 @@ class CanvasEngine {
     // Export-mode data override — set by exportPipeline.js during the frame loop
     this._exportFreqData = null
     this._exportTimeData = null
+    // Stereo export-mode data override (task-15) — { left, right } Uint8Array pairs
+    this._exportFreqDataStereo = null
+    this._exportTimeDataStereo = null
 
     // Preview aspect ratio override — set by resolution preset picker (task-10)
     this._previewW = null
@@ -177,10 +180,15 @@ class CanvasEngine {
     }
 
     // ── Waveform ───────────────────────────────────────────────────────────
-    const freqData = this._exportFreqData || (analyser ? analyser.getFrequencyData()  : new Uint8Array(1024))
-    const timeData = this._exportTimeData || (analyser ? analyser.getTimeDomainData() : new Uint8Array(1024).fill(128))
-    const drawFn   = MODES[visualizerState.mode] || MODES.bar_classic
-    drawFn(ctx, freqData, timeData, visualizerState, W, H)
+    const drawFn = MODES[visualizerState.mode] || MODES.bar_classic
+
+    if (visualizerState.channelMode === 'stereo') {
+      this._drawStereoWaveform(drawFn, ctx, analyser, W, H)
+    } else {
+      const freqData = this._exportFreqData || (analyser ? analyser.getFrequencyData()  : new Uint8Array(1024))
+      const timeData = this._exportTimeData || (analyser ? analyser.getTimeDomainData() : new Uint8Array(1024).fill(128))
+      drawFn(ctx, freqData, timeData, visualizerState, W, H)
+    }
 
     // ── Text overlay ───────────────────────────────────────────────────────
     // Task-8 replaces this with the full textOverlay renderer
@@ -194,15 +202,75 @@ class CanvasEngine {
     }
   }
 
+  // ─── Stereo waveform orchestration (Feature A) ────────────────────────────
+  // Calls the active mode's draw function twice — once per channel — reusing every
+  // mode file completely unchanged. Works because every mode file already computes
+  // its layout in "target resolution space" and scales down via
+  // ctx.scale(W/targetW, H/targetH) (see barClassic.js), so calling a mode with a
+  // transformed ctx and a reduced W/H (a sub-viewport) already produces correctly
+  // scaled/mirrored output with no mode-file changes needed.
+  _drawStereoWaveform(drawFn, ctx, analyser, W, H) {
+    const { left: freqL, right: freqR } = this._exportFreqDataStereo
+      || (analyser ? analyser.getFrequencyDataStereo() : { left: new Uint8Array(1024), right: new Uint8Array(1024) })
+    const { left: timeL, right: timeR } = this._exportTimeDataStereo
+      || (analyser ? analyser.getTimeDomainDataStereo() : { left: new Uint8Array(1024).fill(128), right: new Uint8Array(1024).fill(128) })
+
+    // Don't mutate the shared visualizerState — mode files only ever read `state`,
+    // never write to it, so a shallow per-channel clone is safe and cheap.
+    const stateL = visualizerState.independentChannelColors
+      ? { ...visualizerState, color: visualizerState.colorL }
+      : visualizerState
+    const stateR = visualizerState.independentChannelColors
+      ? { ...visualizerState, color: visualizerState.colorR }
+      : visualizerState
+
+    if (visualizerState.stereoLayout === 'mirrored') {
+      // Both channels use the full W/H, sharing a center axis. Left draws normally;
+      // right is flipped vertically first, so each mode's existing "grows upward
+      // from centerY" logic makes it visually grow in the opposite direction.
+      ctx.save()
+      drawFn(ctx, freqL, timeL, stateL, W, H)
+      ctx.restore()
+
+      ctx.save()
+      ctx.translate(0, H)
+      ctx.scale(1, -1)
+      drawFn(ctx, freqR, timeR, stateR, W, H)
+      ctx.restore()
+    } else {
+      // 'stacked' (default) — left channel in the top half, right in the bottom
+      // half. Each half is independently centered via the mode's own existing
+      // centerVertically logic.
+      ctx.save()
+      drawFn(ctx, freqL, timeL, stateL, W, H / 2)
+      ctx.restore()
+
+      ctx.save()
+      ctx.translate(0, H / 2)
+      drawFn(ctx, freqR, timeR, stateR, W, H / 2)
+      ctx.restore()
+    }
+  }
+
   // ─── Export data override (used by exportPipeline.js) ────────────────────
   setExportData(freqData, timeData) {
     this._exportFreqData = freqData
     this._exportTimeData = timeData
   }
 
+  // Stereo counterpart of setExportData() — task-15's export path supplies
+  // per-channel { freqData, timeData } pairs the same shape as
+  // offlineFrequencyAnalyser.js's stereo capture output.
+  setExportDataStereo(left, right) {
+    this._exportFreqDataStereo = { left: left.freqData, right: right.freqData }
+    this._exportTimeDataStereo = { left: left.timeData, right: right.timeData }
+  }
+
   clearExportData() {
     this._exportFreqData = null
     this._exportTimeData = null
+    this._exportFreqDataStereo = null
+    this._exportTimeDataStereo = null
   }
 
   // ─── Export helpers (used by task-9) ──────────────────────────────────────

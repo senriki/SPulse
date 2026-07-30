@@ -15,6 +15,7 @@ import { analyzeOffline }   from '../audio/offlineFrequencyAnalyser.js'
 // the track) — matches AnalyserNode.frequencyBinCount for fftSize=2048.
 const SILENT_FREQ = new Uint8Array(1024)
 const SILENT_TIME = new Uint8Array(1024).fill(128)
+const SILENT_CHANNEL = { freqData: SILENT_FREQ, timeData: SILENT_TIME }
 
 // ─── Read export settings from exportSettings state ───────────────────────────
 function readExportSettings() {
@@ -124,7 +125,9 @@ export async function startExport() {
       // AnalyserNode produces during preview (same fftSize/smoothing), unlike the
       // old synthetic amplitude-modulated approximation this replaced, which
       // consistently produced much shorter bars in export than in preview.
-      analyzeOffline(audioLoader.audioBuffer, fps, visualizerState.smoothing / 100, () => _cancelled),
+      // Requests channel-aware (stereo) capture only when the visualizer is
+      // actually in stereo mode — mono export behavior/output is unaffected.
+      analyzeOffline(audioLoader.audioBuffer, fps, visualizerState.smoothing / 100, () => _cancelled, visualizerState.channelMode === 'stereo'),
     ])
     // Prep above can take several seconds on its own — reset the timer here so the
     // fps/ETA readout reflects only the per-frame loop below, not diluted by prep time.
@@ -136,8 +139,13 @@ export async function startExport() {
       if (_cancelled) break
 
       const t = frame / fps
-      const { freqData, timeData } = audioFrames[frame] || { freqData: SILENT_FREQ, timeData: SILENT_TIME }
-      canvasEngine.setExportData(freqData, timeData)
+      if (visualizerState.channelMode === 'stereo') {
+        const { left, right } = audioFrames[frame] || { left: SILENT_CHANNEL, right: SILENT_CHANNEL }
+        canvasEngine.setExportDataStereo(left, right)
+      } else {
+        const { freqData, timeData } = audioFrames[frame] || SILENT_CHANNEL
+        canvasEngine.setExportData(freqData, timeData)
+      }
       // Try the pre-decoded loop cache first (cheap lookup); fall back to an
       // explicit seek only if it wasn't available for this position.
       const usedCache = await window.backgroundRenderer?.selectExportFrame(visualizerState.background, t)

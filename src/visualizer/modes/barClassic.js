@@ -1,4 +1,5 @@
 import { exportSettings } from '../../export/exportSettings.js'
+import { deriveBarWidth, resolveBinIndex, computeCenterPeakMagnitudes } from './_barLayout.js'
 
 // bar_classic: vertical frequency bars, equalizer style (Canvas 2D fillRect)
 // freqData: Uint8Array[1024] from AnalyserNode.getByteFrequencyData (fftSize=2048)
@@ -7,7 +8,7 @@ import { exportSettings } from '../../export/exportSettings.js'
 //       size during export, a scaled-down equivalent during preview)
 // timeData unused here — present to satisfy the shared draw fn signature
 export function drawBarClassic(ctx, freqData, timeData, state, W, H) {
-  const { padding, barWidth, barGap, color, opacity, glow, centerVertically, yOffset, sensitivity = 1 } = state
+  const { padding, numBars, barGap, color, opacity, glow, centerVertically, yOffset, sensitivity = 1, mirrorLR, mirrorPeakCenter } = state
 
   // Layout math happens in real target-resolution space, then gets scaled down to
   // actual canvas pixel space — same pattern as backgroundRenderer/textOverlay.
@@ -17,9 +18,10 @@ export function drawBarClassic(ctx, freqData, timeData, state, W, H) {
   const targetW = exportSettings.width  || W
   const targetH = exportSettings.height || H
 
-  const step    = barWidth + barGap
-  const availW  = targetW - padding * 2
-  const numBars = Math.max(1, Math.floor(availW / step))
+  // numBars is authoritative (Feature B) — barWidth derives from it instead of the
+  // other way around, so exactly numBars bars fill the available width.
+  const barWidth = deriveBarWidth({ targetW, padding, numBars, barGap })
+  const step     = barWidth + barGap
 
   // Baseline: where bars start (growing upward from here)
   const baseline  = centerVertically ? targetH / 2 + yOffset : targetH - padding + yOffset
@@ -27,6 +29,12 @@ export function drawBarClassic(ctx, freqData, timeData, state, W, H) {
 
   // Only use lower 75% of frequency bins — upper range is high-freq noise for typical music
   const usableBins = Math.floor(freqData.length * 0.75)
+
+  // "Peak at center" reorders + smooths bars by live magnitude, so it must be
+  // precomputed once per frame (not per-bar like resolveBinIndex) — see _barLayout.js.
+  const peakMagnitudes = (mirrorLR && mirrorPeakCenter)
+    ? computeCenterPeakMagnitudes({ numBars, usableBins, freqData })
+    : null
 
   ctx.save()
   ctx.scale(W / targetW, H / targetH)
@@ -39,8 +47,10 @@ export function drawBarClassic(ctx, freqData, timeData, state, W, H) {
   }
 
   for (let i = 0; i < numBars; i++) {
-    const binIdx = Math.floor((i / numBars) * usableBins)
-    const mag    = Math.min(freqData[binIdx] / 255 * sensitivity, 1)
+    const rawMag = peakMagnitudes
+      ? peakMagnitudes[i]
+      : freqData[resolveBinIndex({ i, numBars, usableBins, mirrorLR })]
+    const mag    = Math.min(rawMag / 255 * sensitivity, 1)
     const barH   = Math.max(2, mag * maxBarH)
     const x      = padding + i * step
     ctx.fillRect(x, baseline - barH, barWidth, barH)

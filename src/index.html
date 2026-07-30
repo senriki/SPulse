@@ -104,6 +104,41 @@
           </div>
         </section>
 
+        <!-- Channel Mode (Stereo) -->
+        <section class="panel-section">
+          <h3 class="section-label">Channel Mode</h3>
+          <div class="radio-row" id="channel-mode-selector">
+            <label class="radio-label"><input type="radio" name="channel-mode" value="mono" checked> Mono</label>
+            <label class="radio-label"><input type="radio" name="channel-mode" value="stereo"> Stereo</label>
+          </div>
+
+          <div id="stereo-controls" class="hidden">
+            <div class="control-group">
+              <label class="control-label">Stereo Layout</label>
+              <select id="stereo-layout" class="select-input">
+                <option value="stacked">Stacked (Top / Bottom)</option>
+                <option value="mirrored">Mirrored (Shared Axis)</option>
+              </select>
+            </div>
+            <div class="control-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="independent-channel-colors">
+                Independent channel colors
+              </label>
+            </div>
+            <div id="channel-color-controls" class="hidden">
+              <div class="control-group">
+                <label class="control-label">Left Color</label>
+                <input type="color" id="waveform-color-l" class="color-swatch" value="#00D4FF">
+              </div>
+              <div class="control-group">
+                <label class="control-label">Right Color</label>
+                <input type="color" id="waveform-color-r" class="color-swatch" value="#FF6B35">
+              </div>
+            </div>
+          </div>
+        </section>
+
         <!-- Color Controls -->
         <section class="panel-section">
           <h3 class="section-label">Waveform Color</h3>
@@ -127,13 +162,29 @@
         <!-- Size Controls -->
         <section class="panel-section">
           <h3 class="section-label">Size & Shape</h3>
-          <div class="control-group">
+          <div class="control-group" id="bar-width-group">
             <label class="control-label">Bar Width <span class="value-display" id="bar-width-val">4px</span></label>
             <input type="range" id="bar-width" class="range-input" min="1" max="32" value="4">
           </div>
           <div class="control-group">
             <label class="control-label">Bar Gap <span class="value-display" id="bar-gap-val">1px</span></label>
             <input type="range" id="bar-gap" class="range-input" min="0" max="16" value="1">
+          </div>
+          <div class="control-group">
+            <label class="control-label">Bar Count <span class="value-display" id="bar-count-val">377</span></label>
+            <input type="range" id="bar-count" class="range-input" min="4" max="500" value="377">
+          </div>
+          <div class="control-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="mirror-lr">
+              Mirror Left/Right
+            </label>
+          </div>
+          <div class="control-group hidden" id="mirror-peak-center-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="mirror-peak-center">
+              Peak at Center
+            </label>
           </div>
           <div class="control-group">
             <label class="control-label">Line Width <span class="value-display" id="line-width-val">2px</span></label>
