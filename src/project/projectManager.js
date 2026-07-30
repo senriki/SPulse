@@ -2,6 +2,7 @@
 // Does NOT touch the DOM — caller handles DOM sync after deserializeState().
 import { visualizerState } from '../visualizer/visualizerState.js'
 import { exportSettings }  from '../export/exportSettings.js'
+import { computeBarLayout } from '../visualizer/modes/_barLayout.js'
 
 export const SPX_VERSION = '1.0'
 
@@ -22,12 +23,20 @@ export function serializeState(audioFilePath) {
       glow:             visualizerState.glow,
       barWidth:         visualizerState.barWidth,
       barGap:           visualizerState.barGap,
+      numBars:          visualizerState.numBars,
+      mirrorLR:         visualizerState.mirrorLR,
+      mirrorPeakCenter: visualizerState.mirrorPeakCenter,
       lineWidth:        visualizerState.lineWidth,
       padding:          visualizerState.padding,
       smoothing:        visualizerState.smoothing,
       sensitivity:      visualizerState.sensitivity,
       centerVertically: visualizerState.centerVertically,
       yOffset:          visualizerState.yOffset,
+      channelMode:               visualizerState.channelMode,
+      stereoLayout:              visualizerState.stereoLayout,
+      independentChannelColors:  visualizerState.independentChannelColors,
+      colorL:                    visualizerState.colorL,
+      colorR:                    visualizerState.colorR,
       background: {
         type:          bg.type,
         color:         bg.color,
@@ -138,9 +147,13 @@ export async function deserializeState(data) {
   const ov = vs.overlay      || {}
   const ex = data.export     || {}
 
-  // Visualizer top-level fields
-  ;['mode','color','opacity','glow','barWidth','barGap','lineWidth','padding',
-    'smoothing','sensitivity','centerVertically','yOffset'].forEach(k => {
+  // Visualizer top-level fields (numBars is handled separately below — it needs a
+  // back-compat fallback, not just a default, so it can't be a blind passthrough).
+  // The five stereo fields need no fallback either — absent means the module
+  // default (mono, etc. from _createDefaultVisualizerState) is exactly right.
+  ;['mode','color','opacity','glow','barWidth','barGap','mirrorLR','mirrorPeakCenter','lineWidth','padding',
+    'smoothing','sensitivity','centerVertically','yOffset',
+    'channelMode','stereoLayout','independentChannelColors','colorL','colorR'].forEach(k => {
     if (vs[k] !== undefined) visualizerState[k] = vs[k]
   })
 
@@ -174,6 +187,25 @@ export async function deserializeState(data) {
     if (ex[k] !== undefined) exportSettings[k] = ex[k]
   })
   exportSettings.outputPath = ''
+
+  // numBars back-compat: pre-Feature-B files don't have this field. Deriving it via
+  // computeBarLayout() against the file's own barWidth/barGap/padding (already
+  // assigned above) and its own resolution (exportSettings.width/height, already
+  // assigned just above from `ex`, or the app's existing default if the file
+  // predates export settings too) reproduces exactly the bar count that project
+  // would have rendered under the old derived-count formula — so the new
+  // numBars-primary path derives back the same effective bar width the user had.
+  // Must run after the exportSettings assignment above, not before.
+  if (vs.numBars !== undefined) {
+    visualizerState.numBars = vs.numBars
+  } else {
+    visualizerState.numBars = computeBarLayout({
+      targetW:  exportSettings.width,
+      padding:  visualizerState.padding,
+      barWidth: visualizerState.barWidth,
+      barGap:   visualizerState.barGap,
+    }).numBars
+  }
 
   return { audioPath: data.audioPath || null }
 }

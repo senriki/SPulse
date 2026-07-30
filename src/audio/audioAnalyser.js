@@ -7,6 +7,28 @@ export class AudioAnalyser {
     this.analyserNode.smoothingTimeConstant = 0.8
     this.analyserNode.connect(audioContext.destination)
 
+    // Stereo analysis (Feature A) — additive to the mono path above, which stays
+    // the default/fallback and remains the only path connected for actual playback.
+    this.splitterNode = audioContext.createChannelSplitter(2)
+    this.analyserL = audioContext.createAnalyser()
+    this.analyserL.fftSize = 2048
+    this.analyserL.smoothingTimeConstant = 0.8
+    this.analyserR = audioContext.createAnalyser()
+    this.analyserR.fftSize = 2048
+    this.analyserR.smoothingTimeConstant = 0.8
+    this.splitterNode.connect(this.analyserL, 0)
+    this.splitterNode.connect(this.analyserR, 1)
+
+    // analyserL/analyserR need to be reachable from destination for their FFT state
+    // to keep updating, but must not produce any audible output — the mono
+    // analyserNode above already drives real playback. Route them through a
+    // zero-gain node instead of connecting directly to destination.
+    this._stereoGain = audioContext.createGain()
+    this._stereoGain.gain.value = 0
+    this.analyserL.connect(this._stereoGain)
+    this.analyserR.connect(this._stereoGain)
+    this._stereoGain.connect(audioContext.destination)
+
     this._sourceNode   = null
     this._audioBuffer  = null
     this._startTime    = 0   // audioContext.currentTime when play() was called
@@ -15,6 +37,10 @@ export class AudioAnalyser {
 
     this._freqBuf = new Uint8Array(this.analyserNode.frequencyBinCount)
     this._timeBuf = new Uint8Array(this.analyserNode.frequencyBinCount)
+    this._freqBufL = new Uint8Array(this.analyserL.frequencyBinCount)
+    this._freqBufR = new Uint8Array(this.analyserR.frequencyBinCount)
+    this._timeBufL = new Uint8Array(this.analyserL.frequencyBinCount)
+    this._timeBufR = new Uint8Array(this.analyserR.frequencyBinCount)
 
     // Callers may assign: analyser.onEnded = () => { ... }
     this.onEnded = null
@@ -37,7 +63,10 @@ export class AudioAnalyser {
   }
 
   setSmoothingTimeConstant(value) {
-    this.analyserNode.smoothingTimeConstant = Math.max(0, Math.min(0.99, value))
+    const v = Math.max(0, Math.min(0.99, value))
+    this.analyserNode.smoothingTimeConstant = v
+    this.analyserL.smoothingTimeConstant = v
+    this.analyserR.smoothingTimeConstant = v
   }
 
   play() {
@@ -100,6 +129,20 @@ export class AudioAnalyser {
     return this._timeBuf
   }
 
+  // Returns live per-channel FFT frequency magnitude data (0–255 per bin)
+  getFrequencyDataStereo() {
+    this.analyserL.getByteFrequencyData(this._freqBufL)
+    this.analyserR.getByteFrequencyData(this._freqBufR)
+    return { left: this._freqBufL, right: this._freqBufR }
+  }
+
+  // Returns live per-channel time-domain waveform data (0–255, 128 = silence)
+  getTimeDomainDataStereo() {
+    this.analyserL.getByteTimeDomainData(this._timeBufL)
+    this.analyserR.getByteTimeDomainData(this._timeBufR)
+    return { left: this._timeBufL, right: this._timeBufR }
+  }
+
   _buildSource() {
     if (this._sourceNode) {
       try { this._sourceNode.disconnect() } catch {}
@@ -107,5 +150,6 @@ export class AudioAnalyser {
     this._sourceNode = this.audioContext.createBufferSource()
     this._sourceNode.buffer = this._audioBuffer
     this._sourceNode.connect(this.analyserNode)
+    this._sourceNode.connect(this.splitterNode)
   }
 }

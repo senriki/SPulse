@@ -16,7 +16,10 @@ const FFT_SIZE = 2048   // matches AudioAnalyser's analyserNode.fftSize
 // populated.
 // shouldAbort is polled per frame so export cancel drains the remaining scheduled
 // suspend points quickly instead of doing unnecessary capture work for all of them.
-export function analyzeOffline(audioBuffer, fps, smoothingTimeConstant, shouldAbort) {
+// stereo (Feature A, opt-in, default false): when true, each resolved entry is
+// instead { left: { freqData, timeData }, right: { freqData, timeData } } — the
+// mono return shape/behavior above is completely unchanged when stereo is false.
+export function analyzeOffline(audioBuffer, fps, smoothingTimeConstant, shouldAbort, stereo = false) {
   return new Promise((resolve, reject) => {
     const duration    = audioBuffer.duration
     const totalFrames = Math.max(1, Math.ceil(duration * fps))
@@ -35,15 +38,38 @@ export function analyzeOffline(audioBuffer, fps, smoothingTimeConstant, shouldAb
 
     const source = oac.createBufferSource()
     source.buffer = audioBuffer
+    const smoothing = Math.max(0, Math.min(0.99, smoothingTimeConstant))
 
-    const analyser = oac.createAnalyser()
-    analyser.fftSize = FFT_SIZE
-    analyser.smoothingTimeConstant = Math.max(0, Math.min(0.99, smoothingTimeConstant))
-
-    source.connect(analyser)
-    // Analyser must be part of the graph OfflineAudioContext actually renders
-    // (i.e. reachable from destination) or its internal FFT state won't update.
-    analyser.connect(oac.destination)
+    // Stereo mode mirrors task-12's live-graph pattern: a splitter + two
+    // channel-scoped analysers instead of one mono analyser. Both paths must be
+    // reachable from destination for their FFT state to update during
+    // OfflineAudioContext rendering (see the comment below) — there's no
+    // audible-output concern here (unlike the live AudioContext in
+    // audioAnalyser.js) since OfflineAudioContext never reaches real speakers, so
+    // no zero-gain node is needed.
+    let analyser, analyserL, analyserR
+    if (stereo) {
+      const splitter = oac.createChannelSplitter(2)
+      analyserL = oac.createAnalyser()
+      analyserL.fftSize = FFT_SIZE
+      analyserL.smoothingTimeConstant = smoothing
+      analyserR = oac.createAnalyser()
+      analyserR.fftSize = FFT_SIZE
+      analyserR.smoothingTimeConstant = smoothing
+      source.connect(splitter)
+      splitter.connect(analyserL, 0)
+      splitter.connect(analyserR, 1)
+      analyserL.connect(oac.destination)
+      analyserR.connect(oac.destination)
+    } else {
+      analyser = oac.createAnalyser()
+      analyser.fftSize = FFT_SIZE
+      analyser.smoothingTimeConstant = smoothing
+      source.connect(analyser)
+      // Analyser must be part of the graph OfflineAudioContext actually renders
+      // (i.e. reachable from destination) or its internal FFT state won't update.
+      analyser.connect(oac.destination)
+    }
     source.start(0)
 
     const results = new Array(totalFrames)
@@ -68,11 +94,26 @@ export function analyzeOffline(audioBuffer, fps, smoothingTimeConstant, shouldAb
       oac.suspend(t).then(() => {
         if (shouldAbort?.()) { oac.resume(); done(); return }
         try {
-          const freqData = new Uint8Array(analyser.frequencyBinCount)
-          const timeData = new Uint8Array(analyser.frequencyBinCount)
-          analyser.getByteFrequencyData(freqData)
-          analyser.getByteTimeDomainData(timeData)
-          results[i] = { freqData, timeData }
+          if (stereo) {
+            const freqL = new Uint8Array(analyserL.frequencyBinCount)
+            const timeL = new Uint8Array(analyserL.frequencyBinCount)
+            const freqR = new Uint8Array(analyserR.frequencyBinCount)
+            const timeR = new Uint8Array(analyserR.frequencyBinCount)
+            analyserL.getByteFrequencyData(freqL)
+            analyserL.getByteTimeDomainData(timeL)
+            analyserR.getByteFrequencyData(freqR)
+            analyserR.getByteTimeDomainData(timeR)
+            results[i] = {
+              left:  { freqData: freqL, timeData: timeL },
+              right: { freqData: freqR, timeData: timeR },
+            }
+          } else {
+            const freqData = new Uint8Array(analyser.frequencyBinCount)
+            const timeData = new Uint8Array(analyser.frequencyBinCount)
+            analyser.getByteFrequencyData(freqData)
+            analyser.getByteTimeDomainData(timeData)
+            results[i] = { freqData, timeData }
+          }
         } catch (err) {
           console.warn(`analyzeOffline: capture failed at frame ${i} (t=${t.toFixed(3)}s):`, err)
         }

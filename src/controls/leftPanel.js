@@ -1,6 +1,16 @@
 import { setupColorPicker } from './colorPicker.js'
 import { setupSlider }      from './sliders.js'
 
+// Modes whose bar count is fully derived from numBars (Feature B) — for these, the
+// Bar Width slider has no effect on layout anymore, so it's hidden.
+const BAR_MODES = ['bar_classic', 'bar_mirror', 'spectrum_glow']
+
+// Shared by stylePicker.js's mode-switch handler and initial load (renderer.js's
+// _syncDomFromState) — toggles the Bar Width control-group based on active mode.
+export function updateBarWidthVisibility(mode) {
+  document.getElementById('bar-width-group')?.classList.toggle('hidden', BAR_MODES.includes(mode))
+}
+
 // Wire all left-panel controls to visualizerState.
 // appState is passed in to avoid a circular import with renderer.js.
 // All setters returned by setupColorPicker/setupSlider are collected for
@@ -43,6 +53,67 @@ export function initLeftPanel(appState, visualizerState) {
     v => `${v}px`,
     v => { visualizerState.barGap = Math.round(v) }
   )
+
+  // ─── Bar Count ─────────────────────────────────────────────────────────────
+  const setBarCount = setupSlider(
+    $('bar-count'), $('bar-count-val'),
+    v => `${Math.round(v)}`,
+    v => { visualizerState.numBars = Math.round(v) }
+  )
+  // Sync the slider's initial position to numBars' programmatically-computed
+  // default (not the markup's literal `value=`, which is just a fallback).
+  setBarCount(visualizerState.numBars)
+
+  // ─── Bar Width visibility (hidden for numBars-driven bar modes) ──────────────
+  updateBarWidthVisibility(visualizerState.mode)
+
+  // ─── Mirror Left/Right ─────────────────────────────────────────────────────
+  const mirrorPeakCenterGroupEl = $('mirror-peak-center-group')
+  $('mirror-lr').addEventListener('change', e => {
+    visualizerState.mirrorLR = e.target.checked
+    mirrorPeakCenterGroupEl?.classList.toggle('hidden', !e.target.checked)
+  })
+  mirrorPeakCenterGroupEl?.classList.toggle('hidden', !visualizerState.mirrorLR)
+
+  // ─── Mirror Peak at Center (sub-option of Mirror Left/Right) ──────────────
+  $('mirror-peak-center')?.addEventListener('change', e => {
+    visualizerState.mirrorPeakCenter = e.target.checked
+  })
+
+  // ─── Channel Mode (Stereo) ─────────────────────────────────────────────────
+  const stereoControlsEl       = $('stereo-controls')
+  const channelColorControlsEl = $('channel-color-controls')
+
+  $$('[name="channel-mode"]').forEach(radio => {
+    radio.addEventListener('change', e => {
+      if (!e.target.checked) return
+      visualizerState.channelMode = e.target.value
+      stereoControlsEl?.classList.toggle('hidden', e.target.value !== 'stereo')
+    })
+  })
+
+  $('stereo-layout')?.addEventListener('change', e => {
+    visualizerState.stereoLayout = e.target.value
+  })
+
+  $('independent-channel-colors')?.addEventListener('change', e => {
+    visualizerState.independentChannelColors = e.target.checked
+    channelColorControlsEl?.classList.toggle('hidden', !e.target.checked)
+  })
+
+  setupColorPicker(
+    $('waveform-color-l'), null,
+    v => { visualizerState.colorL = v }
+  )
+  setupColorPicker(
+    $('waveform-color-r'), null,
+    v => { visualizerState.colorR = v }
+  )
+
+  // Sync initial section visibility to state (matches markup defaults today, but
+  // stays correct if the hardcoded defaults ever change).
+  stereoControlsEl?.classList.toggle('hidden', visualizerState.channelMode !== 'stereo')
+  channelColorControlsEl?.classList.toggle('hidden', !visualizerState.independentChannelColors)
 
   // ─── Line Width ────────────────────────────────────────────────────────────
   setupSlider(

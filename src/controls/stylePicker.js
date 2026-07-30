@@ -1,3 +1,5 @@
+import { updateBarWidthVisibility } from './leftPanel.js'
+
 // Wires the style-picker icon grid in the left panel to the canvas engine.
 // Handles active-state highlighting and mode switching.
 export function initStylePicker(engine) {
@@ -8,6 +10,7 @@ export function initStylePicker(engine) {
       const mode = btn.dataset.mode
       if (!mode) return
       engine.setMode(mode)
+      updateBarWidthVisibility(mode)
       buttons.forEach(b => b.classList.remove('active'))
       btn.classList.add('active')
     })

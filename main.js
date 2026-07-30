@@ -83,6 +83,7 @@ function createMenu() {
       label: 'File',
       submenu: [
         { label: 'New Session', accelerator: 'CmdOrCtrl+N', click: () => _mainWin?.webContents.send('menu-new-session') },
+        { label: 'Reset Settings (Keep Audio)', accelerator: 'CmdOrCtrl+Shift+R', click: () => _mainWin?.webContents.send('menu-reset-settings') },
         { type: 'separator' },
         { label: 'Open Audio…', accelerator: 'CmdOrCtrl+O', click: () => _mainWin?.webContents.send('menu-open-audio') },
         { label: 'Save Project', accelerator: 'CmdOrCtrl+S', click: () => _mainWin?.webContents.send('menu-save-project') },

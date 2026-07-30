@@ -1,3 +1,6 @@
+import { exportSettings } from '../export/exportSettings.js'
+import { computeBarLayout } from './modes/_barLayout.js'
+
 // Central visualizer configuration — all modules read from this object.
 // Task-5 wires left-panel controls to mutate these values.
 // Task-9 (export) reads this for per-frame rendering.
@@ -7,6 +10,14 @@
 // Used both to build the initial `visualizerState` below and to power the
 // "Reset to default" action (see resetVisualizerStateToDefaults).
 function _createDefaultVisualizerState() {
+  // Bar / line dimensions — defined here (not inline below) so numBars can be
+  // derived from these exact values via computeBarLayout, instead of hardcoding
+  // numBars as a magic number that could silently drift from barWidth/barGap/padding.
+  const barWidth = 4
+  const barGap   = 1
+  const padding  = 16
+  const { numBars } = computeBarLayout({ targetW: exportSettings.width, padding, barWidth, barGap })
+
   return {
     mode: 'bar_classic',
 
@@ -16,10 +27,13 @@ function _createDefaultVisualizerState() {
     glow:    0,          // 0–100 maps to 0–30px shadowBlur
 
     // Bar / line dimensions
-    barWidth:  4,
-    barGap:    1,
+    barWidth,
+    barGap,
+    numBars,             // primary control for bar_classic/bar_mirror/spectrum_glow — barWidth is derived from this (see _barLayout.js deriveBarWidth)
+    mirrorLR: false,     // Feature C — mirror bar pattern around the vertical center axis; combinable with all bar modes
+    mirrorPeakCenter: false, // sub-option of mirrorLR — reorders bars by live magnitude so the loudest is always at center, instead of a fixed frequency→position mapping
     lineWidth: 2,
-    padding:   16,
+    padding,
 
     // Smoothing (0–99 → 0.0–0.99 AnalyserNode.smoothingTimeConstant)
     smoothing: 80,
@@ -30,6 +44,13 @@ function _createDefaultVisualizerState() {
     // Position
     centerVertically: true,
     yOffset: 0,
+
+    // Stereo (Feature A) — mono is the unchanged default
+    channelMode: 'mono',            // 'mono' | 'stereo'
+    stereoLayout: 'stacked',        // 'stacked' | 'mirrored' — only meaningful when channelMode is 'stereo'
+    independentChannelColors: false,
+    colorL: '#00D4FF',              // matches the default `color`, so opting into stereo looks identical until independentChannelColors is enabled
+    colorR: '#FF6B35',              // distinct accent so enabling independentChannelColors is immediately visible
 
     // Background — task-7 populates and renders this
     background: {
