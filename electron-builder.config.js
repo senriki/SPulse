@@ -1,10 +1,35 @@
+const fs = require('fs')
+const path = require('path')
 const pkg = require('./package.json')
 
 const isPrerelease = pkg.version.includes('-')
 
+// Ubuntu 23.10+ restricts unprivileged user namespaces via AppArmor, which
+// crashes Electron's SUID sandbox init with a FATAL setuid_sandbox_host.cc
+// abort. That check runs in native code during zygote-host startup, before
+// main.js's JS executes — so app.commandLine.appendSwitch('no-sandbox') is
+// too late to prevent it. Renaming the packaged binary and replacing it with
+// a wrapper script that re-execs with --no-sandbox puts the flag in argv at
+// OS exec time, ahead of any native startup.
+function wrapLinuxSandbox(context) {
+  if (context.electronPlatformName !== 'linux') return
+
+  const execName = context.packager.executableName
+  const realBinary = path.join(context.appOutDir, execName)
+  const wrappedBinary = path.join(context.appOutDir, `${execName}.bin`)
+
+  fs.renameSync(realBinary, wrappedBinary)
+  fs.writeFileSync(
+    realBinary,
+    `#!/bin/sh\nDIR="$(cd "$(dirname "$0")" && pwd)"\nexec "$DIR/${execName}.bin" --no-sandbox "$@"\n`,
+    { mode: 0o755 }
+  )
+}
+
 module.exports = {
   appId: isPrerelease ? 'com.senriki.spulse.rc' : 'com.senriki.spulse',
   productName: isPrerelease ? 'SPulse RC' : 'SPulse',
+  afterPack: wrapLinuxSandbox,
   asar: true,
   asarUnpack: [
     'node_modules/ffmpeg-static/**'
@@ -38,9 +63,8 @@ module.exports = {
     category: 'AudioVideo',
     // Only reaches launches that go through a generated .desktop Exec= entry —
     // does not apply when the AppImage is run directly (double-click or bare
-    // ./AppImage), which is why it alone didn't fix the Ubuntu 23.10+ sandbox
-    // crash. The actual fix is the platform-gated
-    // app.commandLine.appendSwitch('no-sandbox') in main.js, which covers every
+    // ./AppImage). The actual fix for the Ubuntu 23.10+ sandbox crash is the
+    // afterPack binary wrapper above (wrapLinuxSandbox), which covers every
     // launch path. Left here as a harmless no-op-if-unused fallback for the
     // .desktop path.
     executableArgs: ['--no-sandbox']
