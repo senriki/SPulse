@@ -7,3 +7,5 @@ Thumbs.db
 debug/
 *.docx
 *.doc
+
+package-lock.json
