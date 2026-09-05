@@ -37,15 +37,22 @@ window.appState = appState   // expose for non-module script interop if needed
 let _projectFilePath = null   // path of the currently open .spx file
 let _isDirty         = false  // true when state has changed since last save/load
 
-// ─── Auto-load last-used settings (global "last session", not per-project) ───
+// ─── Auto-load last-used project/settings on launch ──────────────────────────
 // State only, applied here before anything below reads visualizerState/exportSettings.
-// The matching DOM sync (_syncDomFromState / backgroundRenderer.reloadFromState) runs
-// at the very end of this module instead of here, since it depends on module-level
-// `let` bindings (e.g. _detectedGpu) declared further down that aren't initialized yet
-// at this point in top-level evaluation. First launch (no last-session.json) leaves
-// visualizerState/exportSettings at their hardcoded defaults, unchanged.
+// The matching DOM sync (_syncDomFromState / backgroundRenderer.reloadFromState /
+// audio reload) runs at the very end of this module instead of here, since it
+// depends on module-level `let` bindings (e.g. _detectedGpu) declared further down
+// that aren't initialized yet at this point in top-level evaluation. First launch
+// (no last-session.json) leaves visualizerState/exportSettings at their hardcoded
+// defaults, unchanged. `projectFilePath` (if present) restores which project this
+// state belongs to — so relaunching genuinely reopens the last saved/imported/
+// opened project, not just its bare settings values with no project identity.
 const _lastSession = await window.api.loadLastSession()
-if (_lastSession) await deserializeState(_lastSession)
+let _lastSessionAudioPath = null
+if (_lastSession) {
+  _lastSessionAudioPath = (await deserializeState(_lastSession)).audioPath
+  if (_lastSession.projectFilePath) _projectFilePath = _lastSession.projectFilePath
+}
 
 // ─── DOM refs ────────────────────────────────────────────────────────────────
 const dropZone     = document.getElementById('canvas-drop-zone')
@@ -601,13 +608,14 @@ function _clearDirty() {
 }
 
 // ─── Auto-save last-used settings (debounced, global "last session") ─────────
-// Independent of the .spx dirty/history tracking above — this persists a global
-// device-level snapshot on every settings change, not the user's explicit project file.
+// Persists a device-level snapshot on every settings change — includes whatever
+// project (if any) is currently open via _currentLastSessionPayload(), so a
+// relaunch restores that project's identity too, not just bare setting values.
 let _autoSaveTimer = null
 function _scheduleAutoSaveLastSession() {
   clearTimeout(_autoSaveTimer)
   _autoSaveTimer = setTimeout(() => {
-    window.api.saveLastSession(serializeState())
+    window.api.saveLastSession(_currentLastSessionPayload())
   }, 800)
 }
 
@@ -744,7 +752,9 @@ async function _saveProject() {
   if (!savedPath) return   // user cancelled
   _projectFilePath = savedPath
   _clearDirty()
+  _updateTitleBar()
   window.api.recordRecentProject?.(savedPath)
+  window.api.saveLastSession(_currentLastSessionPayload())
   const hint = document.getElementById('project-hint')
   if (hint) { hint.textContent = 'Saved ✓'; setTimeout(() => { hint.textContent = 'Ctrl+S to save' }, 2000) }
 }
@@ -761,6 +771,34 @@ async function _exportProject() {
   if (!savedPath) return   // user cancelled
   const hint = document.getElementById('project-hint')
   if (hint) { hint.textContent = 'Exported ✓'; setTimeout(() => { hint.textContent = 'Ctrl+S to save' }, 2000) }
+}
+
+// ─── Audio: reload from an explicit path (project restore, of any kind) ──────
+// Shared by _applyProjectData() and the last-session startup restore below —
+// both need the exact same "read the file, decode it, or show a not-found
+// hint" behavior for a project's referenced audio file.
+async function _reloadAudioFromPath(audioPath) {
+  if (!audioPath) return
+  const audioResult = await window.api.loadAudioPath(audioPath)
+  if (audioResult?.error) {
+    const hint = document.getElementById('project-hint')
+    if (hint) hint.textContent = `Audio not found: ${audioPath.replace(/.*[\\/]/, '')}`
+  } else if (audioResult) {
+    const u8 = audioResult.buffer instanceof Uint8Array
+      ? audioResult.buffer
+      : new Uint8Array(Object.values(audioResult.buffer))
+    const ab = u8.buffer.slice(u8.byteOffset, u8.byteOffset + u8.byteLength)
+    await loadAudio(ab, audioResult.filePath)
+  }
+}
+
+// ─── Last-session persistence (Ctrl-independent auto-save, restore on launch) ─
+// Includes projectFilePath alongside serializeState()'s own fields — kept as a
+// sibling field, not part of serializeState() itself, since a project FILE
+// should never embed a self-referential path (the file could be moved/renamed
+// and that stale path would then be wrong for anyone else opening it).
+function _currentLastSessionPayload() {
+  return { ...serializeState(appState.filePath || ''), projectFilePath: _projectFilePath }
 }
 
 // ─── Project: shared "apply loaded/imported .spx data" logic ──────────────────
@@ -782,20 +820,7 @@ async function _applyProjectData(projectPath, data, { recordRecent = true } = {}
   resetExportSettingsToDefaults()
 
   const { audioPath } = await deserializeState(data)
-
-  if (audioPath) {
-    const audioResult = await window.api.loadAudioPath(audioPath)
-    if (audioResult?.error) {
-      const hint = document.getElementById('project-hint')
-      if (hint) hint.textContent = `Audio not found: ${audioPath.replace(/.*[\\/]/, '')}`
-    } else if (audioResult) {
-      const u8 = audioResult.buffer instanceof Uint8Array
-        ? audioResult.buffer
-        : new Uint8Array(Object.values(audioResult.buffer))
-      const ab = u8.buffer.slice(u8.byteOffset, u8.byteOffset + u8.byteLength)
-      await loadAudio(ab, audioResult.filePath)
-    }
-  }
+  await _reloadAudioFromPath(audioPath)
 
   // Sync all DOM controls to the restored state
   _syncDomFromState(visualizerState, exportSettings)
@@ -805,6 +830,12 @@ async function _applyProjectData(projectPath, data, { recordRecent = true } = {}
 
   _projectFilePath = projectPath
   _clearDirty()
+  _updateTitleBar()
+
+  // Persist immediately (not the debounced settings-change path) so quitting
+  // right after opening a project — before touching any control — still
+  // restores this exact project on next launch, not a stale earlier session.
+  window.api.saveLastSession(_currentLastSessionPayload())
 
   // Recent-projects list (Feature H) — Load and OS-triggered open both funnel
   // through here; Import explicitly opts out (see _importProject()), since a
@@ -858,7 +889,7 @@ function _resetToDefaults() {
   resetExportSettingsToDefaults()
   _syncDomFromState(visualizerState, exportSettings)
   clearTimeout(_autoSaveTimer)
-  window.api.saveLastSession(serializeState())
+  window.api.saveLastSession(_currentLastSessionPayload())
   _setDirty()
   const hint = document.getElementById('project-hint')
   if (hint) { hint.textContent = 'Reset to default ✓'; setTimeout(() => { hint.textContent = 'Ctrl+S to save' }, 2000) }
@@ -873,15 +904,18 @@ function _newSession() {
   _unloadAudio()
   _resetAudioUI()
 
+  // Clear undo/redo history and the open-project association BEFORE resetting —
+  // _resetToDefaults() immediately persists last-session.json, and it must see
+  // _projectFilePath already cleared, not the just-abandoned project's path.
+  historyManager.clear()
+  _projectFilePath = null
+
   // Reset visualizer/export settings to defaults — reuses the existing Reset to
   // Default flow (including its immediate last-session.json overwrite).
   _resetToDefaults()
 
-  // Clear undo/redo history and the open-project association — this session isn't
-  // "attached" to any project file or prior edit history anymore.
-  historyManager.clear()
-  _projectFilePath = null
   _clearDirty()
+  _updateTitleBar()
   const hint = document.getElementById('project-hint')
   if (hint) hint.textContent = 'New session ✓'
 }
@@ -1086,10 +1120,17 @@ window.api.detectGpuEncoders?.().then(info => {
 // ─── Auto-update banner ───────────────────────────────────────────────────────
 initUpdateBanner()
 
-// ─── Sync DOM + background assets to the auto-loaded session (if any) ────────
+// ─── Sync DOM + reload audio/background for the auto-loaded session (if any) ─
 // Runs last, after every control-wiring call above and after all module-level
 // `let`/`const` bindings are initialized (see the auto-load block near the top).
 if (_lastSession) {
   _syncDomFromState(visualizerState, exportSettings)
   backgroundRenderer.reloadFromState(visualizerState.background)
+  // loadAudio() (inside _reloadAudioFromPath) unconditionally marks state dirty —
+  // correct when the user opens new audio, wrong here since we're restoring
+  // exactly what was already saved. _clearDirty() after, matching how
+  // _applyProjectData() ends every one of its own restore paths the same way.
+  await _reloadAudioFromPath(_lastSessionAudioPath)
+  _clearDirty()
+  _updateTitleBar()
 }
