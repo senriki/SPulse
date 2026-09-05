@@ -477,6 +477,12 @@ appLayout?.addEventListener('transitionend', e => {
   if (e.propertyName === 'grid-template-columns') canvasEngine.refitPreview()
 })
 
+// Same reasoning as above — collapsing the top menu bar (Feature I) frees up
+// vertical space the canvas area can grow into.
+document.getElementById('app-menu-bar')?.addEventListener('transitionend', e => {
+  if (e.propertyName === 'height') canvasEngine.refitPreview()
+})
+
 toggleLeftPanel?.addEventListener('click', () => {
   _leftPanelCollapsed = !_leftPanelCollapsed
   _applyPanelWidths()

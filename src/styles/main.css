@@ -110,31 +110,65 @@ html, body {
 }
 
 /* ─── Custom in-app menu bar (Windows/Linux only) ──────────────────────────── */
-/* Full-width, top of the window (VS Code-style) — independent of any panel's
-   width, so a dropdown never looks oversized relative to its container. */
+/* Full-width, top of the window — independent of any panel's width, so a
+   dropdown never looks oversized relative to its container. Same
+   collapse/expand drawer mechanism as .panel-toggle (left/right panels):
+   a pill tab straddling the bar's bottom edge, chevron rotates 180° between
+   states, height animates via transition. Deliberately NEVER uses
+   overflow:hidden on .app-menu-bar — clipping content is done via
+   `visibility: hidden` on the nav instead, so the toggle tab (also an
+   absolutely-positioned child) is never at risk of being clipped by its own
+   collapsing parent, and the open dropdown (which renders below the bar's
+   own height) is never clipped either — see task-27 postmortem for why this
+   matters (an earlier draft using overflow:hidden clipped the dropdown). */
 .app-menu-bar {
+  position: relative;
   display: flex;
   align-items: center;
   height: 30px;
-  padding: 0 4px;
+  padding: 0 8px;
   background: var(--color-app-bg);
   border-bottom: 1px solid var(--color-panel-border);
   flex-shrink: 0;
+  transition: height var(--transition-med);
 }
 
-.app-menu-toggle {
-  background: none;
-  border: none;
-  color: var(--color-text-secondary);
-  font-size: 14px;
-  line-height: 1;
-  width: 26px;
-  height: 26px;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  flex-shrink: 0;
+.app-menu-bar.collapsed {
+  height: 0;
+  border-bottom: none;
 }
-.app-menu-toggle:hover { background: var(--color-surface-hover); color: var(--color-text-primary); }
+
+.app-menu-bar.collapsed .menu-bar { visibility: hidden; }
+
+.app-menu-toggle {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translate(-50%, 50%);
+  z-index: 5;
+  width: 44px;
+  height: 16px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-panel-bg);
+  border: 1px solid var(--color-panel-border);
+  border-top: none;
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.app-menu-toggle:hover {
+  color: var(--color-text-primary);
+  background: var(--color-surface-hover);
+}
+
+.app-menu-toggle svg { width: 12px; height: 12px; flex-shrink: 0; transition: transform var(--transition-fast); }
+
+.app-menu-bar.collapsed .app-menu-toggle svg { transform: rotate(180deg); }
 
 .menu-bar {
   display: flex;

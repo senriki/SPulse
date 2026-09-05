@@ -83,9 +83,11 @@ export function initMenuBar(actions) {
 
   const toggle = document.getElementById('app-menu-toggle')
   const collapsed = localStorage.getItem(COLLAPSED_KEY) === 'true'
-  bar.classList.toggle('collapsed', collapsed)
+  wrap.classList.toggle('collapsed', collapsed)
+  if (toggle) toggle.title = collapsed ? 'Expand menu bar' : 'Collapse menu bar'
   toggle?.addEventListener('click', () => {
-    const nowCollapsed = bar.classList.toggle('collapsed')
+    const nowCollapsed = wrap.classList.toggle('collapsed')
+    toggle.title = nowCollapsed ? 'Expand menu bar' : 'Collapse menu bar'
     localStorage.setItem(COLLAPSED_KEY, nowCollapsed)
   })
 

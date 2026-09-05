@@ -13,11 +13,14 @@
 <body>
   <!-- Custom in-app menu bar — Windows/Linux only (macOS keeps its native
        top-of-screen menu). Hidden by default; menuBar.js reveals it after
-       checking window.api.platform. Full-width, top of the window, VS
-       Code-style — collapsible via the toggle button, independent of any
-       panel's width. -->
+       checking window.api.platform. Full-width, top of the window — same
+       collapse/expand drawer mechanism as the left/right panel-toggle tabs
+       (src/index.html's #toggle-left-panel/#toggle-right-panel), just
+       horizontal instead of vertical. -->
   <div class="app-menu-bar hidden" id="app-menu-bar">
-    <button class="app-menu-toggle" id="app-menu-toggle" type="button" title="Toggle menu bar">☰</button>
+    <button class="app-menu-toggle" id="app-menu-toggle" type="button" title="Collapse menu bar">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10l5-5 5 5"/></svg>
+    </button>
     <nav class="menu-bar" id="menu-bar">
       <div class="menu-item" data-menu="file">
         <button class="menu-trigger" type="button">File</button>
