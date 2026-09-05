@@ -152,17 +152,17 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--color-panel-bg);
-  border: 1px solid var(--color-panel-border);
-  border-top: none;
-  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  background: var(--color-surface-active);
+  border: 1px solid var(--color-text-muted);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
   color: var(--color-text-secondary);
   cursor: pointer;
   transition: color var(--transition-fast), background var(--transition-fast);
 }
 
 .app-menu-toggle:hover {
-  color: var(--color-text-primary);
+  color: var(--color-accent);
   background: var(--color-surface-hover);
 }
 
