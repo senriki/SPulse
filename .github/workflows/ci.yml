@@ -33,3 +33,9 @@ jobs:
           node --check src/export/gpuDetect.js
           node --check src/export/frameWriter.js
           node --check scripts/gen-icon.js
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run E2E suite
+        run: xvfb-run -a npm run test:e2e
