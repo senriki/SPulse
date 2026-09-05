@@ -1,6 +1,8 @@
 node_modules/
 dist/
 out/
+test-results/
+playwright-report/
 *.log
 .DS_Store
 Thumbs.db
