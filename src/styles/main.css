@@ -143,8 +143,8 @@ html, body {
 .app-menu-toggle {
   position: absolute;
   left: 50%;
-  bottom: 0;
-  transform: translate(-50%, 50%);
+  top: 100%;
+  transform: translateX(-50%);
   z-index: 5;
   width: 44px;
   height: 16px;
