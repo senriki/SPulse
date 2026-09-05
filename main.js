@@ -19,7 +19,21 @@ if (process.platform === 'linux') {
   app.commandLine.appendSwitch('no-sandbox')
 }
 
+// Only one running instance at a time — launching a second copy (double-click,
+// running `npm start` again, etc.) just focuses the existing window instead of
+// spawning a duplicate process that would fight over the same audio/export state.
+if (!app.requestSingleInstanceLock()) {
+  app.quit()
+  return
+}
+
 let _mainWin = null
+
+app.on('second-instance', () => {
+  if (!_mainWin) return
+  if (_mainWin.isMinimized()) _mainWin.restore()
+  _mainWin.focus()
+})
 
 // ─── Auto-updater ─────────────────────────────────────────────────────────────
 function _initAutoUpdater() {
