@@ -423,6 +423,7 @@ document.addEventListener('keydown', e => {
   const ctrl = e.ctrlKey || e.metaKey
 
   if (ctrl && e.key === 'n') { e.preventDefault(); _newSession() }
+  if (ctrl && e.shiftKey && e.key.toLowerCase() === 'r') { e.preventDefault(); _resetToDefaults() }
   if (ctrl && e.key === 'o') { e.preventDefault(); _openFilePicker() }
   if (ctrl && e.key === 's') { e.preventDefault(); _saveProject() }
   if (ctrl && e.key === 'e') { e.preventDefault(); if (appState.loaded) { _pauseForExport(); startExport() } }
