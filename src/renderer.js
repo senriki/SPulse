@@ -738,6 +738,7 @@ async function _saveProject() {
   if (!savedPath) return   // user cancelled
   _projectFilePath = savedPath
   _clearDirty()
+  window.api.recordRecentProject?.(savedPath)
   const hint = document.getElementById('project-hint')
   if (hint) { hint.textContent = 'Saved ✓'; setTimeout(() => { hint.textContent = 'Ctrl+S to save' }, 2000) }
 }
@@ -764,7 +765,7 @@ async function _exportProject() {
 // `data.audioPath` is always '' (the real audio lives in `data.audioAsset`) — only
 // deserializeState()'s returned `audioPath` (resolved to a temp file) is usable. For a
 // legacy v1.0 file this ordering is a no-op change (deserializeState doesn't touch audio).
-async function _applyProjectData(projectPath, data) {
+async function _applyProjectData(projectPath, data, { recordRecent = true } = {}) {
   // Start from a clean slate first — otherwise a field missing from `data` (e.g. an
   // older-schema project file) would silently inherit whatever was live in memory from
   // the previous session instead of falling back to a proper default, and any
@@ -798,6 +799,11 @@ async function _applyProjectData(projectPath, data) {
 
   _projectFilePath = projectPath
   _clearDirty()
+
+  // Recent-projects list (Feature H) — Load and OS-triggered open both funnel
+  // through here; Import explicitly opts out (see _importProject()), since a
+  // portable-share import is often a one-off, not an ongoing project.
+  if (recordRecent) window.api.recordRecentProject?.(projectPath)
 }
 
 // ─── Project: load ────────────────────────────────────────────────────────────
@@ -833,7 +839,7 @@ async function _openProjectFile({ filePath, data }) {
 async function _importProject() {
   const result = await window.api.importProject()
   if (!result) return   // user cancelled
-  await _applyProjectData(result.filePath, result.data)
+  await _applyProjectData(result.filePath, result.data, { recordRecent: false })
   const hint = document.getElementById('project-hint')
   if (hint) { hint.textContent = 'Project imported ✓'; setTimeout(() => { hint.textContent = 'Ctrl+S to save' }, 2000) }
 }

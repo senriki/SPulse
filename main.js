@@ -295,6 +295,54 @@ ipcMain.handle('load-last-session', () => {
   return JSON.parse(fs.readFileSync(filePath, 'utf8'))
 })
 
+// ─── Recent projects (MRU list, separate from last-session.json since the two
+// have different lifecycles — one entry always-overwritten vs. an
+// append/evict list) ──────────────────────────────────────────────────────
+const RECENT_PROJECTS_LIMIT = 10
+
+function _recentProjectsPath() {
+  return path.join(app.getPath('userData'), 'recent-projects.json')
+}
+
+function _readRecentProjects() {
+  try {
+    const filePath = _recentProjectsPath()
+    if (!fs.existsSync(filePath)) return []
+    const parsed = JSON.parse(fs.readFileSync(filePath, 'utf8'))
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+function _writeRecentProjects(list) {
+  fs.writeFileSync(_recentProjectsPath(), JSON.stringify(list, null, 2), 'utf8')
+}
+
+ipcMain.handle('record-recent-project', (event, filePath) => {
+  const list = _readRecentProjects().filter(entry => entry.filePath !== filePath)
+  list.unshift({ filePath, name: path.basename(filePath), openedAt: Date.now() })
+  _writeRecentProjects(list.slice(0, RECENT_PROJECTS_LIMIT))
+})
+
+ipcMain.handle('load-recent-projects', () => _readRecentProjects())
+
+ipcMain.handle('remove-recent-project', (event, filePath) => {
+  _writeRecentProjects(_readRecentProjects().filter(entry => entry.filePath !== filePath))
+})
+
+ipcMain.handle('clear-recent-projects', () => _writeRecentProjects([]))
+
+// ─── Load a project from an explicit path (recent-projects click — no dialog) ─
+ipcMain.handle('load-project-from-path', (event, filePath) => {
+  try {
+    const data = JSON.parse(fs.readFileSync(filePath, 'utf8'))
+    return { filePath, data }
+  } catch (err) {
+    return { error: err.message }
+  }
+})
+
 // ─── Load audio by explicit path (used by project load — no dialog) ──────────
 ipcMain.handle('load-audio-path', async (event, filePath) => {
   try {

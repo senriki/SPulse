@@ -60,6 +60,18 @@ contextBridge.exposeInMainWorld('api', {
   loadLastSession: () =>
     ipcRenderer.invoke('load-last-session'),
 
+  // Recent projects (MRU list)
+  recordRecentProject: (filePath) =>
+    ipcRenderer.invoke('record-recent-project', filePath),
+  loadRecentProjects: () =>
+    ipcRenderer.invoke('load-recent-projects'),
+  removeRecentProject: (filePath) =>
+    ipcRenderer.invoke('remove-recent-project', filePath),
+  clearRecentProjects: () =>
+    ipcRenderer.invoke('clear-recent-projects'),
+  loadProjectFromPath: (filePath) =>
+    ipcRenderer.invoke('load-project-from-path', filePath),
+
   // Main → Renderer events (export progress)
   onExportProgress: (cb) =>
     ipcRenderer.on('export-progress', (event, data) => cb(data)),
