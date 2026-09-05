@@ -11,31 +11,4 @@ on:
 
 jobs:
   check:
-    name: Syntax check
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v5
-        with:
-          node-version: 22
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Check main process syntax
-        run: |
-          node --check main.js
-          node --check preload.js
-          node --check src/export/ffmpegPath.js
-          node --check src/export/gpuDetect.js
-          node --check src/export/frameWriter.js
-          node --check scripts/gen-icon.js
-
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
-
-      - name: Run E2E suite
-        run: xvfb-run -a npm run test:e2e
+    uses: ./.github/workflows/check.yml

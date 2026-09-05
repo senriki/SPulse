@@ -12,9 +12,15 @@ on:
         required: true
 
 jobs:
-  # Step 1: create the GitHub release once before any build starts
+  # Step 0: same syntax + E2E gate as every main push/PR (ci.yml) — a broken
+  # build should never get published as a release, not just blocked from main.
+  check:
+    uses: ./.github/workflows/check.yml
+
+  # Step 1: create the GitHub release once check passes and before any build starts
   create-release:
     name: Create GitHub Release
+    needs: check
     runs-on: ubuntu-latest
     permissions:
       contents: write
