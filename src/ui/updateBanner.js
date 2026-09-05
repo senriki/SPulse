@@ -42,7 +42,7 @@ export function initUpdateBanner() {
     _pendingVersion = null
     btnUpdateNow.classList.add('hidden')
     progressWrap.classList.remove('hidden')
-    msgEl.textContent = 'Mengunduh update… 0%'
+    msgEl.textContent = 'Downloading update… 0%'
     window.api.downloadUpdate?.()
   })
 
@@ -59,7 +59,7 @@ export function initUpdateBanner() {
     progressWrap.classList.add('hidden')
     btnUpdateNow.classList.add('hidden')
     btnInstall.classList.add('hidden')
-    _show('Sudah versi terbaru')
+    _show('Up to date')
     _autoDismiss(3000)
   })
 
@@ -69,7 +69,7 @@ export function initUpdateBanner() {
     _manualCheck = false
 
     _pendingVersion = version
-    _show(`Versi ${version} tersedia`)
+    _show(`Version ${version} available`)
     progressWrap.classList.add('hidden')
     btnInstall.classList.add('hidden')
     btnUpdateNow.classList.remove('hidden')
@@ -77,20 +77,20 @@ export function initUpdateBanner() {
 
   window.api.onUpdateProgress?.(({ percent }) => {
     progressFill.style.width = `${percent}%`
-    msgEl.textContent = `Mengunduh update… ${percent}%`
+    msgEl.textContent = `Downloading update… ${percent}%`
   })
 
   window.api.onUpdateDownloaded?.(({ version }) => {
     progressWrap.classList.add('hidden')
     btnUpdateNow.classList.add('hidden')
     btnInstall.classList.remove('hidden')
-    _show(`Update ${version} siap diinstall`)
+    _show(`Update ${version} ready to install`)
   })
 
   function _triggerCheck() {
     _pendingVersion = null
     _manualCheck = true
-    _show('Memeriksa update…')
+    _show('Checking for updates…')
     bar.classList.remove('hidden')
     progressWrap.classList.add('hidden')
     btnUpdateNow.classList.add('hidden')
