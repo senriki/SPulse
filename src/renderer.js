@@ -1065,6 +1065,7 @@ initMenuBar({
   redo:                   _redo,
   showAbout:              showAbout,
   checkForUpdatesManually: checkForUpdatesManually,
+  openProjectFile:        _openProjectFile,
 })
 
 // ─── Init UI components ───────────────────────────────────────────────────────

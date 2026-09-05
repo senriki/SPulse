@@ -175,6 +175,21 @@ html, body {
   margin: 5px 4px;
 }
 
+.menu-recent-item { font-size: 12px; color: var(--color-text-secondary); }
+.menu-recent-item:hover { color: var(--color-accent); }
+
+.menu-recent-empty {
+  color: var(--color-text-muted);
+  pointer-events: none;
+  cursor: default;
+}
+
+.menu-recent-clear {
+  color: var(--color-destructive);
+  font-size: 12px;
+}
+.menu-recent-clear:hover { background: var(--color-surface-hover); }
+
 .panel-body {
   flex: 1;
   overflow-y: auto;

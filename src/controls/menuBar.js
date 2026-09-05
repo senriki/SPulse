@@ -17,6 +17,58 @@ const ACTION_KEYS = {
   'check-updates':  'checkForUpdatesManually',
 }
 
+// ─── Recent Projects (Feature H) ───────────────────────────────────────────
+async function _renderRecentProjects(container, separator, actions) {
+  const list = await window.api.loadRecentProjects()
+  container.innerHTML = ''
+
+  if (list.length === 0) {
+    separator.hidden = true
+    const empty = document.createElement('div')
+    empty.className = 'menu-action menu-recent-empty'
+    empty.textContent = 'No recent projects'
+    container.appendChild(empty)
+    return
+  }
+
+  separator.hidden = false
+  for (const entry of list) {
+    const row = document.createElement('button')
+    row.className = 'menu-action menu-recent-item'
+    row.textContent = entry.name
+    row.dataset.recentPath = entry.filePath
+    container.appendChild(row)
+  }
+
+  const clear = document.createElement('button')
+  clear.className = 'menu-action menu-recent-clear'
+  clear.textContent = 'Clear Recent'
+  clear.dataset.recentClear = 'true'
+  container.appendChild(clear)
+}
+
+async function _handleRecentClick(target, container, separator, actions) {
+  if (target.dataset.recentClear) {
+    await window.api.clearRecentProjects()
+    await _renderRecentProjects(container, separator, actions)
+    return
+  }
+
+  const filePath = target.dataset.recentPath
+  if (!filePath) return
+
+  const result = await window.api.loadProjectFromPath(filePath)
+  if (result.error) {
+    await window.api.removeRecentProject(filePath)
+    await _renderRecentProjects(container, separator, actions)
+    const hint = document.getElementById('project-hint')
+    if (hint) hint.textContent = `${target.textContent} not found — removed from Recent`
+    return
+  }
+
+  await actions.openProjectFile?.(result)
+}
+
 export function initMenuBar(actions) {
   const bar = document.getElementById('menu-bar')
   if (!bar) return
@@ -25,6 +77,8 @@ export function initMenuBar(actions) {
   bar.classList.remove('hidden')
 
   const items = [...bar.querySelectorAll('.menu-item')]
+  const recentContainer = document.getElementById('menu-recent-projects')
+  const recentSeparator = document.getElementById('menu-recent-separator')
 
   function closeAll() {
     items.forEach(item => item.classList.remove('active'))
@@ -35,7 +89,10 @@ export function initMenuBar(actions) {
       e.stopPropagation()
       const wasActive = item.classList.contains('active')
       closeAll()
-      if (!wasActive) item.classList.add('active')
+      if (!wasActive) {
+        item.classList.add('active')
+        if (item.dataset.menu === 'file') _renderRecentProjects(recentContainer, recentSeparator, actions)
+      }
     })
   })
 
@@ -45,6 +102,14 @@ export function initMenuBar(actions) {
       const key = ACTION_KEYS[btn.dataset.action]
       actions[key]?.()
     })
+  })
+
+  recentContainer?.addEventListener('click', e => {
+    const target = e.target.closest('.menu-recent-item, .menu-recent-clear')
+    if (!target) return
+    e.stopPropagation()
+    _handleRecentClick(target, recentContainer, recentSeparator, actions)
+    if (target.dataset.recentPath) closeAll()
   })
 
   document.addEventListener('click', closeAll)
