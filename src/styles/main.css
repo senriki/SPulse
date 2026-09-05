@@ -109,6 +109,72 @@ html, body {
   color: var(--color-text-primary);
 }
 
+/* ─── Custom in-app menu bar (Windows/Linux only) ──────────────────────────── */
+.menu-bar {
+  display: flex;
+  gap: 2px;
+  margin-left: auto;
+}
+
+.menu-item { position: relative; }
+
+.menu-trigger {
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.menu-trigger:hover { background: var(--color-surface-hover); color: var(--color-text-primary); }
+
+.menu-item.active .menu-trigger {
+  background: var(--color-surface-active);
+  color: var(--color-accent);
+}
+
+.menu-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 200px;
+  background: var(--color-panel-bg);
+  border: 1px solid var(--color-panel-border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  padding: 6px;
+  z-index: 100;
+}
+
+.menu-item.active .menu-dropdown { display: block; }
+
+.menu-action {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  color: var(--color-text-primary);
+  font: inherit;
+  font-size: 12.5px;
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.menu-action:hover { background: var(--color-surface-hover); color: var(--color-accent); }
+
+.menu-separator {
+  height: 1px;
+  background: var(--color-panel-border);
+  margin: 5px 4px;
+}
+
 .panel-body {
   flex: 1;
   overflow-y: auto;

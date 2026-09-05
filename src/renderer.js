@@ -9,12 +9,14 @@ import { updateBarWidthVisibility } from './controls/leftPanel.js'
 import { backgroundRenderer }   from './background/backgroundRenderer.js'
 import { textOverlay }          from './overlay/textOverlay.js'
 import { initOverlayControls }  from './controls/overlayControls.js'
+import { initMenuBar }          from './controls/menuBar.js'
 import { startExport }               from './export/exportPipeline.js'
 import { exportSettings, resetExportSettingsToDefaults } from './export/exportSettings.js'
 import { serializeState, deserializeState, serializePortableState } from './project/projectManager.js'
 import { historyManager }                  from './history/historyManager.js'
 import { initErrorDialog }                 from './ui/errorDialog.js'
-import { initAboutScreen }                 from './ui/aboutScreen.js'
+import { initAboutScreen, showAbout }      from './ui/aboutScreen.js'
+import { initUpdateBanner, checkForUpdatesManually } from './ui/updateBanner.js'
 import { drawBarMirror }   from './visualizer/modes/barMirror.js'
 import { drawLineSmooth }  from './visualizer/modes/lineSmooth.js'
 import { drawLineFill }    from './visualizer/modes/lineFill.js'
@@ -1042,6 +1044,22 @@ window.api.onOpenProjectFile?.(_openProjectFile)
 window.api.onMenuUndo?.(_undo)
 window.api.onMenuRedo?.(_redo)
 
+// ─── Custom in-app menu bar (Windows/Linux only) ─────────────────────────────
+initMenuBar({
+  newSession:             _newSession,
+  resetSettings:          _resetToDefaults,
+  openFilePicker:         _openFilePicker,
+  saveProject:            _saveProject,
+  loadProject:            _loadProject,
+  exportProject:          _exportProject,
+  importProject:          _importProject,
+  quit:                   () => window.api.quit(),
+  undo:                   _undo,
+  redo:                   _redo,
+  showAbout:              showAbout,
+  checkForUpdatesManually: checkForUpdatesManually,
+})
+
 // ─── Init UI components ───────────────────────────────────────────────────────
 initErrorDialog()
 initAboutScreen()
@@ -1052,97 +1070,7 @@ window.api.detectGpuEncoders?.().then(info => {
 })
 
 // ─── Auto-update banner ───────────────────────────────────────────────────────
-;(function _initUpdateBanner() {
-  const bar         = document.getElementById('update-bar')
-  const msgEl       = document.getElementById('update-msg')
-  const progressWrap= document.getElementById('update-progress-wrap')
-  const progressFill= document.getElementById('update-progress-fill')
-  const btnUpdateNow= document.getElementById('btn-update-now')
-  const btnInstall  = document.getElementById('btn-update-install')
-  const btnDismiss  = document.getElementById('btn-update-dismiss')
-  if (!bar) return
-
-  const DISMISSED_KEY = 'spulse-dismissed-update-version'
-  // Set while a banner is showing an available-but-not-yet-downloading update —
-  // dismissing in that state remembers the version so it doesn't nag again.
-  let _pendingVersion = null
-  // A manual "Check for Updates…" click always shows the result, even for a
-  // version the user previously dismissed on auto-check.
-  let _manualCheck = false
-
-  function _show(msg) {
-    msgEl.textContent = msg
-    bar.classList.remove('hidden')
-  }
-
-  btnDismiss.addEventListener('click', () => {
-    if (_pendingVersion) {
-      localStorage.setItem(DISMISSED_KEY, _pendingVersion)
-      _pendingVersion = null
-    }
-    bar.classList.add('hidden')
-  })
-
-  btnUpdateNow.addEventListener('click', () => {
-    _pendingVersion = null
-    btnUpdateNow.classList.add('hidden')
-    progressWrap.classList.remove('hidden')
-    msgEl.textContent = 'Mengunduh update… 0%'
-    window.api.downloadUpdate?.()
-  })
-
-  btnInstall.addEventListener('click', () => window.api.installUpdate?.())
-
-  let _dismissTimer = null
-  function _autoDismiss(ms = 3000) {
-    clearTimeout(_dismissTimer)
-    _dismissTimer = setTimeout(() => bar.classList.add('hidden'), ms)
-  }
-
-  window.api.onUpdateNotAvailable?.(() => {
-    _manualCheck = false
-    progressWrap.classList.add('hidden')
-    btnUpdateNow.classList.add('hidden')
-    btnInstall.classList.add('hidden')
-    _show('Sudah versi terbaru')
-    _autoDismiss(3000)
-  })
-
-  window.api.onUpdateAvailable?.(({ version }) => {
-    clearTimeout(_dismissTimer)
-    if (!_manualCheck && localStorage.getItem(DISMISSED_KEY) === version) return
-    _manualCheck = false
-
-    _pendingVersion = version
-    _show(`Versi ${version} tersedia`)
-    progressWrap.classList.add('hidden')
-    btnInstall.classList.add('hidden')
-    btnUpdateNow.classList.remove('hidden')
-  })
-
-  window.api.onUpdateProgress?.(({ percent }) => {
-    progressFill.style.width = `${percent}%`
-    msgEl.textContent = `Mengunduh update… ${percent}%`
-  })
-
-  window.api.onUpdateDownloaded?.(({ version }) => {
-    progressWrap.classList.add('hidden')
-    btnUpdateNow.classList.add('hidden')
-    btnInstall.classList.remove('hidden')
-    _show(`Update ${version} siap diinstall`)
-  })
-
-  window.api.onMenuCheckUpdates?.(() => {
-    _pendingVersion = null
-    _manualCheck = true
-    _show('Memeriksa update…')
-    bar.classList.remove('hidden')
-    progressWrap.classList.add('hidden')
-    btnUpdateNow.classList.add('hidden')
-    btnInstall.classList.add('hidden')
-    window.api.checkForUpdates?.()
-  })
-}())
+initUpdateBanner()
 
 // ─── Sync DOM + background assets to the auto-loaded session (if any) ────────
 // Runs last, after every control-wiring call above and after all module-level

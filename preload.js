@@ -1,6 +1,11 @@
 const { contextBridge, ipcRenderer } = require('electron')
 
 contextBridge.exposeInMainWorld('api', {
+  // Platform (static value, no IPC round-trip) — lets the renderer decide
+  // whether to show the custom in-app menu bar (Windows/Linux) or defer to
+  // the native OS menu (macOS).
+  platform: process.platform,
+
   // Audio
   openAudioFile: () =>
     ipcRenderer.invoke('open-audio-file'),

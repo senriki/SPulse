@@ -1,4 +1,9 @@
-// About screen modal — opened via Help > About menu (main → renderer IPC).
+// About screen modal — opened via Help > About (native menu on macOS via IPC,
+// or the in-app menu bar on Windows/Linux via a direct call to showAbout()).
+export function showAbout() {
+  document.getElementById('about-modal')?.classList.remove('hidden')
+}
+
 export function initAboutScreen() {
   const modal = document.getElementById('about-modal')
   if (!modal) return
@@ -12,5 +17,5 @@ export function initAboutScreen() {
     if (el) el.textContent = `Version ${v}`
   })
 
-  window.api.onShowAbout?.(() => modal.classList.remove('hidden'))
+  window.api.onShowAbout?.(showAbout)
 }
