@@ -16,10 +16,12 @@ For a deeper architecture reference (project structure, IPC rules, canvas render
 git clone <your fork URL>
 cd audio-visualizer
 npm install
-make run
+npm start
 ```
 
-`make run` starts the app in development mode (`electron .`). No build step is needed to iterate — edit a file in `src/`, close and reopen the app to see the change (there's no hot-reload).
+`npm start` starts the app in development mode (`electron .`) on every platform, including Windows without Make installed. No build step is needed to iterate — edit a file in `src/`, close and reopen the app to see the change (there's no hot-reload).
+
+On Linux/macOS/WSL, `make run` is an equivalent convenience shortcut if you have Make installed — see `Makefile` for the full list of shortcuts (`make icon`, `make clean`, etc.), each of which has an npm-script equivalent (`npm run icon`, `npm run clean`, ...).
 
 ## Project Layout
 
@@ -50,7 +52,7 @@ Full detail on all of the above lives in `AGENTS.md` → Architecture Rules.
 
 There's no automated test suite yet. Before opening a PR:
 
-1. Run `make run` and manually exercise the feature you touched — load an audio file, try the golden path and at least one edge case.
+1. Run `npm start` (or `make run` on Unix) and manually exercise the feature you touched — load an audio file, try the golden path and at least one edge case.
 2. If you touched the export pipeline, run an actual export and confirm the output MP4 plays correctly.
 3. CI (`ci.yml`) runs a syntax check (`node --check`) on the main-process files on every push and PR — it won't catch logic bugs, just parse errors.
 

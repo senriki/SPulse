@@ -36,21 +36,26 @@ Links always point to the latest stable release. Looking for a portable Windows 
 
 ```bash
 npm install
-make run
+npm start
 ```
+
+On Linux/macOS/WSL, `make run` works the same way if you have Make installed.
 
 ## Commands
 
-| Command | Description |
-|---|---|
-| `make run` | Start the app in development mode |
-| `make install` | Install dependencies |
-| `make build` | Package for the current platform |
-| `make build-win` | Build Windows installer (.exe via NSIS) |
-| `make build-win-portable` | Build Windows portable .exe (no install needed, good for quick testing) |
-| `make build-mac` | Build macOS disk image (.dmg) |
-| `make build-linux` | Build Linux AppImage |
-| `make clean` | Remove `dist/` and `out/` build artifacts |
+| npm script | `make` equivalent (Unix only) | Description |
+|---|---|---|
+| `npm start` | `make run` | Start the app in development mode |
+| `npm install` | `make install` | Install dependencies |
+| `npm run build` | `make build` | Package for the current platform |
+| `npm run build:win` | `make build-win` | Build Windows installer (.exe via NSIS) |
+| `npm run build:win:portable` | `make build-win-portable` | Build Windows portable .exe (no install needed, good for quick testing) |
+| `npm run build:mac` | `make build-mac` | Build macOS disk image (.dmg) |
+| `npm run build:linux` | `make build-linux` | Build Linux AppImage |
+| `npm run icon` | `make icon` | Regenerate app icons in `build/` |
+| `npm run clean` | `make clean` | Remove `dist/` and `out/` build artifacts |
+
+The `npm run ...` commands work on every platform, including Windows without Make installed. The `Makefile` is an optional convenience shortcut for Unix-like shells (Linux/macOS/WSL).
 
 Output is written to `dist/`.
 
@@ -128,7 +133,7 @@ or right-click the file → **Properties → Permissions → Allow executing fil
 
 ## Packaging
 
-Before running `make build`, place app icons in `build/`:
+Before running `npm run build` (or `make build`), place app icons in `build/`:
 
 ```
 build/icon.ico    — Windows  (256×256 multi-resolution ICO)
