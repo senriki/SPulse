@@ -806,6 +806,22 @@ async function _loadProject() {
   if (hint) { hint.textContent = 'Project loaded ✓'; setTimeout(() => { hint.textContent = 'Ctrl+S to save' }, 2000) }
 }
 
+// ─── Project: open from an OS-triggered file (double-click, "Open with", or a
+// second launch attempt while SPulse is already running — see main.js) ────────
+// Same underlying restore path as _loadProject()/_importProject(): deserializeState()
+// transparently handles both legacy v1.0 and portable v2.0 files. Unlike those two
+// (user-initiated via a dialog they just confirmed), this can arrive at any time, so
+// it checks for unsaved changes first — same confirm() pattern as _newSession().
+async function _openProjectFile({ filePath, data }) {
+  if (_isDirty) {
+    const name = filePath.replace(/.*[\\/]/, '')
+    if (!confirm(`Discard unsaved changes and open "${name}"?`)) return
+  }
+  await _applyProjectData(filePath, data)
+  const hint = document.getElementById('project-hint')
+  if (hint) { hint.textContent = 'Project opened ✓'; setTimeout(() => { hint.textContent = 'Ctrl+S to save' }, 2000) }
+}
+
 // ─── Project: import (portable — see Feature C, base64-embedded assets) ───────
 // Same underlying restore path as _loadProject(): deserializeState() transparently
 // handles both legacy v1.0 and portable v2.0 files, so this differs from Load only in
@@ -1022,6 +1038,7 @@ window.api.onMenuSaveProject?.(_saveProject)
 window.api.onMenuLoadProject?.(_loadProject)
 window.api.onMenuExportProject?.(_exportProject)
 window.api.onMenuImportProject?.(_importProject)
+window.api.onOpenProjectFile?.(_openProjectFile)
 window.api.onMenuUndo?.(_undo)
 window.api.onMenuRedo?.(_redo)
 
