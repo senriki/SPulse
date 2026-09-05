@@ -11,6 +11,49 @@
   <link rel="stylesheet" href="styles/controls.css">
 </head>
 <body>
+  <!-- Custom in-app menu bar — Windows/Linux only (macOS keeps its native
+       top-of-screen menu). Hidden by default; menuBar.js reveals it after
+       checking window.api.platform. Full-width, top of the window, VS
+       Code-style — collapsible via the toggle button, independent of any
+       panel's width. -->
+  <div class="app-menu-bar hidden" id="app-menu-bar">
+    <button class="app-menu-toggle" id="app-menu-toggle" type="button" title="Toggle menu bar">☰</button>
+    <nav class="menu-bar" id="menu-bar">
+      <div class="menu-item" data-menu="file">
+        <button class="menu-trigger" type="button">File</button>
+        <div class="menu-dropdown" role="menu">
+          <button class="menu-action" data-action="new-session">New Session</button>
+          <button class="menu-action" data-action="reset-settings">Reset Settings (Keep Audio)</button>
+          <div class="menu-separator"></div>
+          <button class="menu-action" data-action="open-audio">Open Audio…</button>
+          <button class="menu-action" data-action="save-project">Save Project</button>
+          <button class="menu-action" data-action="load-project">Load Project…</button>
+          <div class="menu-separator" id="menu-recent-separator" hidden></div>
+          <div class="menu-recent-projects" id="menu-recent-projects"></div>
+          <div class="menu-separator"></div>
+          <button class="menu-action" data-action="export-project">Export Project…</button>
+          <button class="menu-action" data-action="import-project">Import Project…</button>
+          <div class="menu-separator"></div>
+          <button class="menu-action" data-action="quit">Quit</button>
+        </div>
+      </div>
+      <div class="menu-item" data-menu="edit">
+        <button class="menu-trigger" type="button">Edit</button>
+        <div class="menu-dropdown" role="menu">
+          <button class="menu-action" data-action="undo">Undo</button>
+          <button class="menu-action" data-action="redo">Redo</button>
+        </div>
+      </div>
+      <div class="menu-item" data-menu="help">
+        <button class="menu-trigger" type="button">Help</button>
+        <div class="menu-dropdown" role="menu">
+          <button class="menu-action" data-action="about">About SPulse</button>
+          <button class="menu-action" data-action="check-updates">Check for Updates…</button>
+        </div>
+      </div>
+    </nav>
+  </div>
+
   <div id="update-bar" class="update-bar hidden">
     <span id="update-msg" class="update-msg"></span>
     <div id="update-progress-wrap" class="update-progress-wrap hidden">
@@ -37,44 +80,6 @@
           <rect x="16" y="10" width="2" height="8" rx="1" fill="#00D4FF"/>
         </svg>
         <span class="app-name">SPulse</span>
-
-        <!-- Custom in-app menu bar — Windows/Linux only (macOS keeps its
-             native top-of-screen menu). Hidden by default; menuBar.js reveals
-             it after checking window.api.platform. -->
-        <nav class="menu-bar hidden" id="menu-bar">
-          <div class="menu-item" data-menu="file">
-            <button class="menu-trigger" type="button">File</button>
-            <div class="menu-dropdown" role="menu">
-              <button class="menu-action" data-action="new-session">New Session</button>
-              <button class="menu-action" data-action="reset-settings">Reset Settings (Keep Audio)</button>
-              <div class="menu-separator"></div>
-              <button class="menu-action" data-action="open-audio">Open Audio…</button>
-              <button class="menu-action" data-action="save-project">Save Project</button>
-              <button class="menu-action" data-action="load-project">Load Project…</button>
-              <div class="menu-separator" id="menu-recent-separator" hidden></div>
-              <div class="menu-recent-projects" id="menu-recent-projects"></div>
-              <div class="menu-separator"></div>
-              <button class="menu-action" data-action="export-project">Export Project…</button>
-              <button class="menu-action" data-action="import-project">Import Project…</button>
-              <div class="menu-separator"></div>
-              <button class="menu-action" data-action="quit">Quit</button>
-            </div>
-          </div>
-          <div class="menu-item" data-menu="edit">
-            <button class="menu-trigger" type="button">Edit</button>
-            <div class="menu-dropdown" role="menu">
-              <button class="menu-action" data-action="undo">Undo</button>
-              <button class="menu-action" data-action="redo">Redo</button>
-            </div>
-          </div>
-          <div class="menu-item" data-menu="help">
-            <button class="menu-trigger" type="button">Help</button>
-            <div class="menu-dropdown" role="menu">
-              <button class="menu-action" data-action="about">About SPulse</button>
-              <button class="menu-action" data-action="check-updates">Check for Updates…</button>
-            </div>
-          </div>
-        </nav>
       </div>
 
       <div class="panel-body">

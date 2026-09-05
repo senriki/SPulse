@@ -110,11 +110,38 @@ html, body {
 }
 
 /* ─── Custom in-app menu bar (Windows/Linux only) ──────────────────────────── */
+/* Full-width, top of the window (VS Code-style) — independent of any panel's
+   width, so a dropdown never looks oversized relative to its container. */
+.app-menu-bar {
+  display: flex;
+  align-items: center;
+  height: 30px;
+  padding: 0 4px;
+  background: var(--color-app-bg);
+  border-bottom: 1px solid var(--color-panel-border);
+  flex-shrink: 0;
+}
+
+.app-menu-toggle {
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.app-menu-toggle:hover { background: var(--color-surface-hover); color: var(--color-text-primary); }
+
 .menu-bar {
   display: flex;
   gap: 2px;
-  margin-left: auto;
 }
+
+.menu-bar.collapsed { display: none; }
 
 .menu-item { position: relative; }
 
