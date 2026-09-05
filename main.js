@@ -167,7 +167,10 @@ function createMenu() {
       ]
     }
   ]
-  Menu.setApplicationMenu(Menu.buildFromTemplate(template))
+  // Windows/Linux get the new in-app menu bar (src/controls/menuBar.js) instead
+  // — every action it covers already has a working in-app equivalent (Feature
+  // I). macOS keeps the native top-of-screen menu, per platform convention.
+  Menu.setApplicationMenu(isMac ? Menu.buildFromTemplate(template) : null)
 }
 
 app.whenReady().then(() => {
