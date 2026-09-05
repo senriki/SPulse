@@ -42,6 +42,31 @@ module.exports = {
     '!node_modules/**/{CHANGELOG.md,README.md,*.map,test,tests,__tests__,coverage}',
     '!src/fonts/'
   ],
+  // Registers .spulse/.spx with the OS (Windows registry / NSIS, macOS Info.plist
+  // CFBundleDocumentTypes, Linux .desktop MimeType) so double-clicking a project
+  // file launches SPulse with it already loaded — see main.js's open-file/argv
+  // handling and src/renderer.js's _openProjectFile().
+  // `mimeType` is required for Linux specifically — electron-builder silently
+  // skips MimeType= desktop-entry generation (and the shared-mime-info XML) for
+  // any association missing it; Windows/NSIS and macOS don't need it. Namespaced
+  // under `vnd.spulse.*` (the RFC vendor-tree convention for a non-standard type)
+  // to avoid colliding with `.spx`'s existing well-known use for Speex audio.
+  fileAssociations: [
+    {
+      ext: 'spulse',
+      name: 'SPulse Project',
+      description: 'SPulse portable project file',
+      mimeType: 'application/vnd.spulse.project',
+      role: 'Editor'
+    },
+    {
+      ext: 'spx',
+      name: 'SPulse Project (Legacy)',
+      description: 'SPulse project file',
+      mimeType: 'application/vnd.spulse.project-legacy',
+      role: 'Editor'
+    }
+  ],
   win: {
     icon: 'build/icon.ico',
     target: [{ target: 'nsis', arch: ['x64'] }],
