@@ -17,9 +17,12 @@
 }
 
 .value-display {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  color: var(--color-text-muted);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+  letter-spacing: 0.01em;
 }
 
 /* ─── Range Slider ────────────────────────────────────────────────────────── */
