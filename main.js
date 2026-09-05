@@ -29,10 +29,45 @@ if (!app.requestSingleInstanceLock()) {
 
 let _mainWin = null
 
-app.on('second-instance', () => {
+// ─── Open a project file (double-click, "Open with", or already-running relaunch) ─
+// .spulse/.spx paths reach us three ways: a CLI arg on cold launch (Windows/Linux),
+// the `second-instance` event's commandLine array (already running, Windows/Linux),
+// or the `open-file` event (macOS — can fire before or after app is ready).
+function _findProjectFileArg(argv) {
+  return argv.find(a => /\.(spulse|spx)$/i.test(a)) || null
+}
+
+function _openProjectFileIfValid(filePath) {
+  if (!_mainWin) return
+  try {
+    const data = JSON.parse(fs.readFileSync(filePath, 'utf8'))
+    _mainWin.webContents.send('open-project-file', { filePath, data })
+  } catch (err) {
+    dialog.showErrorBox('Could Not Open Project', `Failed to open "${filePath}":\n${err.message}`)
+  }
+}
+
+// Buffered until the window exists and has finished loading — covers both a cold
+// launch (found on the very first argv scan below) and `open-file` firing before
+// `whenReady()` resolves.
+let _pendingProjectFilePath = _findProjectFileArg(process.argv)
+
+app.on('open-file', (event, filePath) => {
+  event.preventDefault()
+  if (_mainWin) {
+    _openProjectFileIfValid(filePath)
+  } else {
+    _pendingProjectFilePath = filePath
+  }
+})
+
+app.on('second-instance', (event, commandLine) => {
   if (!_mainWin) return
   if (_mainWin.isMinimized()) _mainWin.restore()
   _mainWin.focus()
+
+  const filePath = _findProjectFileArg(commandLine)
+  if (filePath) _openProjectFileIfValid(filePath)
 })
 
 // ─── Auto-updater ─────────────────────────────────────────────────────────────
@@ -87,6 +122,13 @@ function createWindow() {
   })
 
   _mainWin.loadFile('src/index.html')
+
+  _mainWin.webContents.once('did-finish-load', () => {
+    if (_pendingProjectFilePath) {
+      _openProjectFileIfValid(_pendingProjectFilePath)
+      _pendingProjectFilePath = null
+    }
+  })
 }
 
 function createMenu() {
