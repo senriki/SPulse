@@ -408,8 +408,7 @@ dropZone.addEventListener('drop', async e => {
   }
 
   const arrayBuffer = await file.arrayBuffer()
-  // Electron exposes file.path for dropped files
-  await loadAudio(arrayBuffer, file.path || file.name)
+  await loadAudio(arrayBuffer, window.api.getPathForFile(file) || file.name)
 })
 
 // ─── File picker (button + Ctrl+O) ───────────────────────────────────────────

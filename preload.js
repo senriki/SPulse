@@ -1,4 +1,4 @@
-const { contextBridge, ipcRenderer } = require('electron')
+const { contextBridge, ipcRenderer, webUtils } = require('electron')
 
 contextBridge.exposeInMainWorld('api', {
   // Platform (static value, no IPC round-trip) — lets the renderer decide
@@ -9,6 +9,9 @@ contextBridge.exposeInMainWorld('api', {
   // Audio
   openAudioFile: () =>
     ipcRenderer.invoke('open-audio-file'),
+  // Replaces the removed `File.path` (Electron 32+) for drag-and-dropped files.
+  getPathForFile: (file) =>
+    webUtils.getPathForFile(file),
   loadAudioPath: (filePath) =>
     ipcRenderer.invoke('load-audio-path', filePath),
   readFileAsBase64: (filePath) =>
