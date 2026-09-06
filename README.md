@@ -18,18 +18,20 @@ Built with Electron, Web Audio API, Canvas 2D, and FFmpeg.
 | Platform | Link |
 |---|---|
 | Windows 10/11 | [Download .exe](https://github.com/senriki/SPulse/releases/latest/download/SPulse-latest-win.exe) |
-| macOS (Apple Silicon) | [Download .dmg](https://github.com/senriki/SPulse/releases/latest/download/SPulse-latest-mac-arm64.dmg) |
-| macOS (Intel) | [Download .dmg](https://github.com/senriki/SPulse/releases/latest/download/SPulse-latest-mac-x64.dmg) |
+| macOS (Apple Silicon, macOS 13 Ventura+) | [Download .dmg](https://github.com/senriki/SPulse/releases/latest/download/SPulse-latest-mac-arm64.dmg) |
+| macOS (Intel, macOS 13 Ventura+) | [Download .dmg](https://github.com/senriki/SPulse/releases/latest/download/SPulse-latest-mac-x64.dmg) |
 | Linux | [Download .AppImage](https://github.com/senriki/SPulse/releases/latest/download/SPulse-latest-linux.AppImage) |
 
 Links always point to the latest stable release. Looking for a portable Windows build, older versions, or a release candidate? See [all releases](https://github.com/senriki/SPulse/releases).
+
+**macOS 12 or older?** Stay on [v1.3.0](https://github.com/senriki/SPulse/releases/tag/v1.3.0) — v1.4.0 raises the floor to macOS 13 Ventura and will not launch on older systems. The in-app auto-updater does not check OS compatibility before offering an update, so upgrading manually past v1.3.0 on macOS 12 or older is not recommended.
 
 ---
 
 ## Requirements
 
-- Node.js 18+
-- npm 9+
+- Node.js 22.12+
+- npm 10+
 - A display (Windows or macOS host; WSL2 headless is not supported)
 
 ## Getting Started
