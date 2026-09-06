@@ -5,6 +5,9 @@
   "author": "Senriki <senrikis@gmail.com>",
   "license": "MIT",
   "main": "main.js",
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "scripts": {
     "start": "electron .",
     "build": "electron-builder --config electron-builder.config.js",
