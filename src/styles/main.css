@@ -1506,6 +1506,29 @@ body.exporting #transport-bar {
   border-color: color-mix(in oklch, var(--color-accent) 88%, white);
 }
 
+.btn-ok {
+  background: var(--color-ok);
+  border-color: var(--color-ok);
+  color: var(--color-accent-ink);
+}
+
+.btn-ok:hover {
+  background: color-mix(in oklch, var(--color-ok) 88%, white);
+  border-color: color-mix(in oklch, var(--color-ok) 88%, white);
+}
+
+/* Inline caution under a project action (e.g. desktop .spx Save). */
+.caption-warning {
+  margin: 4px 0 0;
+  padding: 6px 8px;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--color-text-primary);
+  background: var(--color-warn-dim);
+  border-left: 3px solid var(--color-warn);
+  border-radius: 4px;
+}
+
 .mt-4 { margin-top: 4px; }
 
 .btn-destructive {

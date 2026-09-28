@@ -161,7 +161,7 @@ function createWebApi() {
       return filename
     },
     exportProject: async (data, defaultPath) => {
-      const filename = _basename(defaultPath).replace(/\.(spx|spulse)$/i, '') + '.spulse'
+      const filename = _basename(defaultPath) || 'project.spulse'
       _downloadBlob(new Blob([JSON.stringify(data)], { type: 'application/json' }), filename)
       return filename
     },

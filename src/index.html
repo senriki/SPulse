@@ -741,12 +741,13 @@
             <button class="btn btn-secondary btn-sm" id="btn-load-project" style="flex:1">Load…</button>
           </div>
           <p class="action-caption desktop-only">This device — .spx file</p>
+          <p class="caption-warning desktop-only" role="note">.spx only links to your files — audio and video may not load on the web or another device. Use Export (.spulse) to share.</p>
           <div class="output-row mt-6 desktop-only">
             <button class="btn btn-secondary btn-sm" id="btn-export-project" style="flex:1">Export…</button>
             <button class="btn btn-secondary btn-sm" id="btn-import-project" style="flex:1">Import…</button>
           </div>
           <p class="action-caption desktop-only">Portable — .spulse file, share to another device or the desktop app</p>
-          <p class="action-caption web-only hidden" id="project-web-caption">Downloads a .spulse file — reopen here or in the desktop app</p>
+          <p class="action-caption web-only hidden" id="project-web-caption">Downloads your project — .spulse (portable) or .spx (this device)</p>
           <p class="export-hint mt-6" id="project-hint">Ctrl+S to save</p>
           <button class="btn btn-destructive btn-sm w-full mt-6" id="btn-reset-defaults">Reset to Default</button>
         </section>
@@ -809,6 +810,19 @@
       <div class="modal-actions confirm-actions">
         <button class="btn btn-secondary" id="confirm-modal-cancel">Cancel</button>
         <button class="btn confirm-primary" id="confirm-modal-confirm">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Project Format Chooser (Export Project) -->
+  <div id="project-format-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="project-format-title" aria-describedby="project-format-msg">
+    <div class="modal confirm-modal">
+      <h2 class="modal-title" id="project-format-title">Export Project</h2>
+      <p class="confirm-message" id="project-format-msg">Choose a format for this project.</p>
+      <div class="modal-actions confirm-actions">
+        <button class="btn confirm-primary" id="project-format-spx" type="button">.spx</button>
+        <button class="btn btn-ok" id="project-format-spulse" type="button">.spulse</button>
+        <button class="btn btn-secondary" id="project-format-cancel" type="button">Cancel</button>
       </div>
     </div>
   </div>

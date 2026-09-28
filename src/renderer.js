@@ -18,6 +18,7 @@ import { historyManager }                  from './history/historyManager.js'
 import { initErrorDialog }                 from './ui/errorDialog.js'
 import { initAboutScreen, showAbout }      from './ui/aboutScreen.js'
 import { initConfirmDialog } from './ui/confirmDialog.js'
+import { initFormatDialog, chooseProjectFormat } from './ui/formatDialog.js'
 import { initUpdateBanner, checkForUpdatesManually } from './ui/updateBanner.js'
 import { initTheme }                       from './ui/theme.js'
 import { ensurePlatformApi, isWeb }        from './platform/webApi.js'
@@ -1054,17 +1055,28 @@ async function _saveProject() {
   // working while a web video export is in progress. Desktop stays blocked via
   // the progress modal.
   if (_isInteractionBlocked('session') && !isWeb()) return
+
+  // Web: Save downloads a file, so ask for the format (see ui/formatDialog.js).
+  // Desktop: Save always writes the native .spx.
+  let format = 'spx'
+  if (isWeb()) {
+    format = await chooseProjectFormat({ title: 'Save Project' })
+    if (!format) return   // cancelled
+  }
+
   const defaultPath = isWeb()
     ? (appState.fileName
-        ? appState.fileName.replace(/\.[^.]+$/, '') + '.spulse'
-        : 'project.spulse')
+        ? appState.fileName.replace(/\.[^.]+$/, '') + `.${format}`
+        : `project.${format}`)
     : (_projectFilePath
         ? _projectFilePath.replace(/\.(spx|spulse)$/i, '') + '.spx'
         : (appState.fileName
             ? appState.fileName.replace(/\.[^.]+$/, '') + '.spx'
             : 'project.spx'))
   const data = isWeb()
-    ? await serializePortableState(appState.filePath || '')
+    ? (format === 'spx'
+        ? serializeState(appState.filePath || '')
+        : await serializePortableState(appState.filePath || ''))
     : serializeState(appState.filePath || '')
   const savedPath = isWeb()
     ? await window.api.exportProject(data, defaultPath)
@@ -1079,17 +1091,29 @@ async function _saveProject() {
   if (hint) { hint.textContent = isWeb() ? 'Downloaded' : 'Saved'; setTimeout(() => { hint.textContent = _defaultProjectHint() }, 2000) }
 }
 
-// ─── Project: export (portable — see Feature C, base64-embedded assets) ───────
+// ─── Project: export (portable .spulse; web may choose .spx) ─────────────────
 // Distinct from _saveProject(): does not touch _projectFilePath/dirty tracking, since
-// the exported file is a portable copy, not the user's currently-open project file.
+// the exported file is a copy, not the user's currently-open project file.
+// Desktop always exports the portable .spulse (Save already covers .spx); only the
+// web build asks, since its Save and Export both end up as a download.
 async function _exportProject() {
-  // Same rationale as _saveProject(): portable export is read-only over state,
-  // so it can run during a web video export without affecting the recording.
+  // Same rationale as _saveProject(): exporting is read-only over state, so it
+  // can run during a web video export without affecting the recording.
   if (_isInteractionBlocked('session') && !isWeb()) return
-  const defaultPath = appState.fileName
-    ? appState.fileName.replace(/\.[^.]+$/, '') + '.spulse'
-    : 'project.spulse'
-  const data      = await serializePortableState(appState.filePath || '')
+
+  let format = 'spulse'
+  if (isWeb()) {
+    format = await chooseProjectFormat({ title: 'Export Project' })
+    if (!format) return   // cancelled
+  }
+
+  const base = appState.fileName
+    ? appState.fileName.replace(/\.[^.]+$/, '')
+    : 'project'
+  const defaultPath = `${base}.${format}`
+  const data = format === 'spx'
+    ? serializeState(appState.filePath || '')
+    : await serializePortableState(appState.filePath || '')
   const savedPath = await window.api.exportProject(data, defaultPath)
   if (!savedPath) return   // user cancelled
   if (isWeb()) _clearDirty({ exported: true })
@@ -1527,6 +1551,7 @@ initMenuBar({
 initErrorDialog()
 initAboutScreen()
 initConfirmDialog()
+initFormatDialog()
 initTheme()
 _syncHistoryButtons()
 
