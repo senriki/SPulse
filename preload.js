@@ -52,8 +52,8 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.invoke('save-project', { data, defaultPath }),
   loadProject: () =>
     ipcRenderer.invoke('load-project'),
-  exportProject: (data, defaultPath, format) =>
-    ipcRenderer.invoke('export-project', { data, defaultPath, format }),
+  exportProject: (data, defaultPath) =>
+    ipcRenderer.invoke('export-project', { data, defaultPath }),
   importProject: () =>
     ipcRenderer.invoke('import-project'),
 

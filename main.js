@@ -240,19 +240,14 @@ ipcMain.handle('save-project', async (event, { data, defaultPath }) => {
   return filePath
 })
 
-// "Export Project" now offers both formats: a native .spx (raw paths) and a portable
-// .spulse (base64-embedded assets) — visually distinguishable in the OS file browser
-// without needing to open the app to tell them apart (see also the in-app "This
-// device" / "Portable" captions in index.html).
-ipcMain.handle('export-project', async (event, { data, defaultPath, format }) => {
-  const portable = format !== 'spx'
+// Portable exports use a distinct .spulse extension — visually distinguishable from a
+// regular .spx save in the OS file browser, without needing to open the app to tell
+// them apart (see also the in-app "This device" / "Portable" captions in index.html).
+ipcMain.handle('export-project', async (event, { data, defaultPath }) => {
   const { canceled, filePath } = await dialog.showSaveDialog({
     title: 'Export Project',
-    defaultPath: defaultPath || (portable ? 'project.spulse' : 'project.spx'),
-    filters: [{
-      name: portable ? 'SPulse Portable Project' : 'SPulse Project',
-      extensions: [portable ? 'spulse' : 'spx'],
-    }],
+    defaultPath: defaultPath || 'project.spulse',
+    filters: [{ name: 'SPulse Portable Project', extensions: ['spulse'] }]
   })
   if (canceled || !filePath) return null
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8')

@@ -1056,11 +1056,11 @@ async function _saveProject() {
   // the progress modal.
   if (_isInteractionBlocked('session') && !isWeb()) return
 
-  // Web has a single Save action, so let the user pick the format there; desktop
-  // keeps Save = native .spx and Export = portable .spulse.
+  // Web: Save downloads a file, so ask for the format (see ui/formatDialog.js).
+  // Desktop: Save always writes the native .spx.
   let format = 'spx'
   if (isWeb()) {
-    format = await chooseProjectFormat()
+    format = await chooseProjectFormat({ title: 'Save Project' })
     if (!format) return   // cancelled
   }
 
@@ -1079,7 +1079,7 @@ async function _saveProject() {
         : await serializePortableState(appState.filePath || ''))
     : serializeState(appState.filePath || '')
   const savedPath = isWeb()
-    ? await window.api.exportProject(data, defaultPath, format)
+    ? await window.api.exportProject(data, defaultPath)
     : await window.api.saveProject(data, defaultPath)
   if (!savedPath) return   // user cancelled
   _projectFilePath = savedPath
@@ -1091,29 +1091,30 @@ async function _saveProject() {
   if (hint) { hint.textContent = isWeb() ? 'Downloaded' : 'Saved'; setTimeout(() => { hint.textContent = _defaultProjectHint() }, 2000) }
 }
 
-// ─── Project: export (choose .spx native or .spulse portable) ─────────────
+// ─── Project: export (portable .spulse; web may choose .spx) ─────────────────
 // Distinct from _saveProject(): does not touch _projectFilePath/dirty tracking, since
 // the exported file is a copy, not the user's currently-open project file.
+// Desktop always exports the portable .spulse (Save already covers .spx); only the
+// web build asks, since its Save and Export both end up as a download.
 async function _exportProject() {
   // Same rationale as _saveProject(): exporting is read-only over state, so it
   // can run during a web video export without affecting the recording.
   if (_isInteractionBlocked('session') && !isWeb()) return
 
-  // Let the user pick between a native .spx (raw file paths, "this device") and
-  // a portable .spulse (assets embedded as base64).
-  const format = await chooseProjectFormat()
-  if (!format) return   // cancelled
+  let format = 'spulse'
+  if (isWeb()) {
+    format = await chooseProjectFormat({ title: 'Export Project' })
+    if (!format) return   // cancelled
+  }
 
   const base = appState.fileName
     ? appState.fileName.replace(/\.[^.]+$/, '')
     : 'project'
   const defaultPath = `${base}.${format}`
-
   const data = format === 'spx'
     ? serializeState(appState.filePath || '')
     : await serializePortableState(appState.filePath || '')
-
-  const savedPath = await window.api.exportProject(data, defaultPath, format)
+  const savedPath = await window.api.exportProject(data, defaultPath)
   if (!savedPath) return   // user cancelled
   if (isWeb()) _clearDirty({ exported: true })
   const hint = document.getElementById('project-hint')
