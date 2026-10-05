@@ -1,14 +1,17 @@
-// Serializes and deserializes app state to/from the .spx project file format (JSON).
+// Serializes and deserializes app state to/from the .spulse project file format (JSON).
 // Does NOT touch the DOM — caller handles DOM sync after deserializeState().
 import { visualizerState } from '../visualizer/visualizerState.js'
 import { exportSettings }  from '../export/exportSettings.js'
 import { computeBarLayout } from '../visualizer/modes/_barLayout.js'
 
+// Legacy v1.0 payload version — still emitted by serializeState() (used for the
+// device-local last-session snapshot and as the base of serializeProjectState()).
 export const SPX_VERSION = '1.0'
 
-// Portable export format (Feature C) — kept as a separate constant so serializeState()'s
-// existing v1.0 behavior (manual project save/load) is entirely untouched by this bump.
-export const SPX_PORTABLE_VERSION = '2.0'
+// Unified project format version. Every .spulse file (config-only or full project
+// with embedded assets) carries this version; deserializeState() branches on it to
+// resolve base64-embedded assets, while legacy v1.0 .spx files fall through untouched.
+export const PROJECT_VERSION = '2.0'
 
 // Build a plain serializable object from current runtime state.
 export function serializeState(audioFilePath) {
@@ -98,14 +101,14 @@ async function _embedAsset(filePath, fallbackName) {
   return { filename, data: result.data }
 }
 
-// Build a portable, device-independent export payload (Feature C, Option 1 from the
-// PRD's Open Decisions): same shape as serializeState()'s output, but audio and
-// background image/video are embedded as base64 instead of stored as raw absolute
-// paths, and `version` is bumped to SPX_PORTABLE_VERSION. Does not mutate or otherwise
-// affect serializeState() / SPX_VERSION — this is purely additive.
-export async function serializePortableState(audioFilePath) {
+// Build the unified .spulse project payload: same shape as serializeState()'s output,
+// but audio and background image/video are embedded as base64 instead of stored as
+// raw absolute paths, and `version` is bumped to PROJECT_VERSION. When no audio or
+// background asset is present the embedded fields are simply null, so a single format
+// covers both config-only sharing and full-project portability.
+export async function serializeProjectState(audioFilePath) {
   const data = serializeState(audioFilePath)
-  data.version = SPX_PORTABLE_VERSION
+  data.version = PROJECT_VERSION
 
   data.audioAsset = await _embedAsset(audioFilePath, window.appState?.fileName)
   data.audioPath  = ''
@@ -125,7 +128,7 @@ async function _writeTempAsset(asset) {
   return window.api.writeTempFile(asset.filename, asset.data)
 }
 
-// Portable v2.0 → v1.0-shaped bridge: decode embedded assets to temp files and return a
+// Unified v2.0 → v1.0-shaped bridge: decode embedded assets to temp files and return a
 // shallow copy of `data` whose audioPath/imagePath/videoPath point at those temp files —
 // letting the rest of deserializeState() treat v1.0 and v2.0 payloads identically.
 async function _resolvePortableAssets(data) {
@@ -142,12 +145,12 @@ async function _resolvePortableAssets(data) {
   return resolved
 }
 
-// Apply data from a parsed .spx JSON to the runtime state singletons.
+// Apply data from a parsed .spulse JSON to the runtime state singletons.
 // Returns { audioPath } so the caller can re-load the audio file.
-// Handles both the legacy v1.0 format (raw absolute paths, used as-is) and the portable
-// v2.0 format (Feature C — base64-embedded assets, resolved to temp files first).
+// Handles both the legacy v1.0 format (raw absolute paths, used as-is) and the unified
+// v2.0 format (base64-embedded assets, resolved to temp files first).
 export async function deserializeState(data) {
-  if (data.version === SPX_PORTABLE_VERSION) data = await _resolvePortableAssets(data)
+  if (data.version === PROJECT_VERSION) data = await _resolvePortableAssets(data)
 
   const vs = data.visualizer || {}
   const bg = vs.background   || {}

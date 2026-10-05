@@ -61,7 +61,7 @@ audio-visualizer/
 │   ├── history/
 │   │   └── historyManager.js  # Undo/redo stack for style changes
 │   ├── project/
-│   │   └── projectManager.js  # .spx JSON save/load
+│   │   └── projectManager.js  # .spulse JSON save/load
 │   ├── ui/
 │   │   ├── errorDialog.js
 │   │   └── aboutScreen.js
@@ -106,7 +106,7 @@ Dark is the default and primary theme; a light theme is allowed as an explicit o
 | Destructive Action | `--color-destructive` | `oklch(0.68 0.17 32)` | `oklch(0.55 0.18 32)` |
 
 ### State Management
-All visualizer configuration lives in `src/visualizer/visualizerState.js` as a single plain object. Controls mutate this object; the canvas engine reads from it each frame. This object is also what gets serialized to `.spx` project files.
+All visualizer configuration lives in `src/visualizer/visualizerState.js` as a single plain object. Controls mutate this object; the canvas engine reads from it each frame. This object is also what gets serialized to `.spulse` project files.
 
 ## Key Constraints
 - **Fully offline** — no external HTTP calls at runtime. Do not add any analytics, telemetry, or remote fetch calls. The only exceptions are update checks:

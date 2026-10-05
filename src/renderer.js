@@ -13,12 +13,11 @@ import { initMenuBar }          from './controls/menuBar.js'
 import { startExport, isExporting, cancelExport } from './export/exportPipeline.js'
 import { applyWebExportLimitsToDom, capWebExport, isWebExporting } from './export/webRecorder.js'
 import { exportSettings, resetExportSettingsToDefaults, isExportSettingsAtDefaults } from './export/exportSettings.js'
-import { serializeState, deserializeState, serializePortableState } from './project/projectManager.js'
+import { serializeState, deserializeState, serializeProjectState } from './project/projectManager.js'
 import { historyManager }                  from './history/historyManager.js'
 import { initErrorDialog }                 from './ui/errorDialog.js'
 import { initAboutScreen, showAbout }      from './ui/aboutScreen.js'
 import { initConfirmDialog } from './ui/confirmDialog.js'
-import { initFormatDialog, chooseProjectFormat } from './ui/formatDialog.js'
 import { initUpdateBanner, checkForUpdatesManually } from './ui/updateBanner.js'
 import { initTheme }                       from './ui/theme.js'
 import { ensurePlatformApi, isWeb }        from './platform/webApi.js'
@@ -49,7 +48,7 @@ function _defaultProjectHint() {
 }
 
 // ─── Project state ────────────────────────────────────────────────────────────
-let _projectFilePath = null   // path of the currently open .spx file
+let _projectFilePath = null   // path of the currently open .spulse file
 let _isDirty         = false  // true when state has changed since last save/load
 let _webClean        = null   // session fingerprint at last save / import / download
 let _webSessionKind  = null   // web status text: 'imported' | 'opened' | 'saved'
@@ -1056,30 +1055,18 @@ async function _saveProject() {
   // the progress modal.
   if (_isInteractionBlocked('session') && !isWeb()) return
 
-  // Web has a single Save action, so let the user pick the format there; desktop
-  // keeps Save = native .spx and Export = portable .spulse.
-  let format = 'spx'
-  if (isWeb()) {
-    format = await chooseProjectFormat()
-    if (!format) return   // cancelled
-  }
+  // One universal project format everywhere: .spulse (portable — assets are
+  // embedded when present, config-only when not). Same on web and desktop.
+  const data = await serializeProjectState(appState.filePath || '')
 
-  const defaultPath = isWeb()
-    ? (appState.fileName
-        ? appState.fileName.replace(/\.[^.]+$/, '') + `.${format}`
-        : `project.${format}`)
-    : (_projectFilePath
-        ? _projectFilePath.replace(/\.(spx|spulse)$/i, '') + '.spx'
-        : (appState.fileName
-            ? appState.fileName.replace(/\.[^.]+$/, '') + '.spx'
-            : 'project.spx'))
-  const data = isWeb()
-    ? (format === 'spx'
-        ? serializeState(appState.filePath || '')
-        : await serializePortableState(appState.filePath || ''))
-    : serializeState(appState.filePath || '')
+  const defaultPath = _projectFilePath
+    ? _projectFilePath.replace(/\.(spx|spulse)$/i, '') + '.spulse'
+    : (appState.fileName
+        ? appState.fileName.replace(/\.[^.]+$/, '') + '.spulse'
+        : 'project.spulse')
+
   const savedPath = isWeb()
-    ? await window.api.exportProject(data, defaultPath, format)
+    ? await window.api.exportProject(data, defaultPath)
     : await window.api.saveProject(data, defaultPath)
   if (!savedPath) return   // user cancelled
   _projectFilePath = savedPath
@@ -1091,7 +1078,7 @@ async function _saveProject() {
   if (hint) { hint.textContent = isWeb() ? 'Downloaded' : 'Saved'; setTimeout(() => { hint.textContent = _defaultProjectHint() }, 2000) }
 }
 
-// ─── Project: export (choose .spx native or .spulse portable) ─────────────
+// ─── Project: export (.spulse, same universal format as Save) ─────────────
 // Distinct from _saveProject(): does not touch _projectFilePath/dirty tracking, since
 // the exported file is a copy, not the user's currently-open project file.
 async function _exportProject() {
@@ -1099,21 +1086,15 @@ async function _exportProject() {
   // can run during a web video export without affecting the recording.
   if (_isInteractionBlocked('session') && !isWeb()) return
 
-  // Let the user pick between a native .spx (raw file paths, "this device") and
-  // a portable .spulse (assets embedded as base64).
-  const format = await chooseProjectFormat()
-  if (!format) return   // cancelled
+  // One universal project format everywhere: .spulse (portable).
+  const data = await serializeProjectState(appState.filePath || '')
 
   const base = appState.fileName
     ? appState.fileName.replace(/\.[^.]+$/, '')
     : 'project'
-  const defaultPath = `${base}.${format}`
+  const defaultPath = `${base}.spulse`
 
-  const data = format === 'spx'
-    ? serializeState(appState.filePath || '')
-    : await serializePortableState(appState.filePath || '')
-
-  const savedPath = await window.api.exportProject(data, defaultPath, format)
+  const savedPath = await window.api.exportProject(data, defaultPath)
   if (!savedPath) return   // user cancelled
   if (isWeb()) _clearDirty({ exported: true })
   const hint = document.getElementById('project-hint')
@@ -1148,7 +1129,7 @@ function _currentLastSessionPayload() {
   return { ...serializeState(appState.filePath || ''), projectFilePath: _projectFilePath }
 }
 
-// ─── Project: shared "apply loaded/imported .spx data" logic ──────────────────
+// ─── Project: shared "apply loaded/imported .spulse data" logic ──────────────────
 // Used by both _loadProject() (legacy manual load) and _importProject() (task-9,
 // portable v2.0 support) — deserializeState() already transparently branches on
 // `data.version`, so both formats flow through this one path.
@@ -1550,7 +1531,6 @@ initMenuBar({
 initErrorDialog()
 initAboutScreen()
 initConfirmDialog()
-initFormatDialog()
 initTheme()
 _syncHistoryButtons()
 

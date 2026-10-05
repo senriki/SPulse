@@ -39,7 +39,7 @@ That runs `node server.js` and should stay in the foreground:
 SPulse web  http://localhost:3000  (v1.4.0)
 ```
 
-Leave that terminal open. Open **[http://localhost:3000](http://localhost:3000)**. Pick **New project** or **Import project** (`.spulse` / `.spx`), then load audio and design as usual.
+Leave that terminal open. Open **[http://localhost:3000](http://localhost:3000)**. Pick **New project** or **Import project** (`.spulse`), then load audio and design as usual.
 
 **Stop the server** with **Ctrl+C** in that same terminal. There is no `npm stop`. If the `PS>` / `$` prompt comes back right after the URL, the process already exited (usually port 3000 is taken) — Ctrl+C will not help. On Windows, find and kill the leftover process, then start again:
 
@@ -132,7 +132,7 @@ Output is written to `dist/`.
 - **Export (web)**: WebM via MediaRecorder, capped at 1080p / 30fps, recorded in real time in the browser
 - **Export (desktop)**: MP4 via FFmpeg (Full HD, 4K, Shorts/Reels, Square, custom; 24/30/60 fps; H.264/H.265; NVENC/AMF/QSV)
 - **Landing (web)**: first screen offers New project or Import project; desktop skips this and opens the studio
-- **Projects**: portable `.spulse` (embedded audio, works web ↔ desktop); desktop can also save `.spx` on this device
+- **Projects**: one portable `.spulse` format for everything (embedded audio, works web ↔ desktop)
 - **Undo/redo**: 20-step history for visualizer style changes (Ctrl+Z / Ctrl+Y)
 - **Desktop extras**: last-session restore, recent files, auto-update from GitHub Releases
 
@@ -145,7 +145,7 @@ Output is written to `dist/`.
 | `Ctrl+Shift+R` | Reset settings (keep audio)                |
 | `Space`        | Play / Pause                               |
 | `Ctrl+E`       | Start export                               |
-| `Ctrl+S`       | Save / download project (`.spulse` on web) |
+| `Ctrl+S`       | Save / download project (`.spulse`)        |
 | `Ctrl+Z`       | Undo                                       |
 | `Ctrl+Y`       | Redo                                       |
 | `F11`          | Toggle canvas fullscreen                   |
